@@ -1,5 +1,5 @@
 /* ==========================================================================
-   MOKALAMATI — 5G SA Core, IMS VoNR & Telecom Revenue Operations
+   ALLO-الو — 5G SA Core, IMS VoNR & Telecom Revenue Operations
    Theme Stylesheet: Original Blue + Vibrant Red + Crisp White (~40% Blue / ~35% Red / ~25% White)
    ========================================================================== */
 
@@ -152,7 +152,7 @@ body {
   transform: scale(0.95);
 }
 
-/* Animated MOKALAMATI Logo (Mixed Blue & Red) */
+/* Animated ALLO-الو Logo (Mixed Blue & Red) */
 .brand-logo-container {
   display: flex;
   align-items: center;
@@ -165,13 +165,13 @@ body {
   transform: translateY(-1px);
 }
 
-.mokalamati-logo-mark {
+.allo-logo-mark {
   width: 32px;
   height: 32px;
   filter: drop-shadow(0 0 6px rgba(56, 189, 248, 0.4));
   transition: transform 0.25s ease, filter 0.25s ease;
 }
-.brand-logo-container:hover .mokalamati-logo-mark {
+.brand-logo-container:hover .allo-logo-mark {
   transform: scale(1.06) rotate(3deg);
   filter: drop-shadow(0 0 10px rgba(251, 113, 133, 0.6));
 }
@@ -192,19 +192,30 @@ body {
 }
 
 .brand-text-wrapper {
-  font-size: 1.15rem;
+  font-size: 1.22rem;
   font-weight: 900;
-  letter-spacing: -0.4px;
+  letter-spacing: -0.3px;
   line-height: 1;
   display: inline-flex;
+  align-items: center;
+  gap: 1px;
 }
-.brand-moka {
+.brand-allo {
   color: #38BDF8;
   text-shadow: 0 0 8px rgba(56, 189, 248, 0.3);
+  font-family: 'Inter', system-ui, sans-serif;
+  letter-spacing: 0.5px;
 }
-.brand-lamati {
+.brand-dash {
+  color: #94A3B8;
+  margin: 0 1px;
+  font-weight: 700;
+}
+.brand-arabic {
   color: #FB7185;
   text-shadow: 0 0 8px rgba(251, 113, 133, 0.3);
+  font-family: 'Inter', 'Segoe UI', 'Cairo', 'Noto Sans Arabic', Tahoma, sans-serif;
+  font-size: 1.15rem;
 }
 
 /* Center Global Search */
