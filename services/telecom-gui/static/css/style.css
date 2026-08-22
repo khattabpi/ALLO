@@ -1,5 +1,5 @@
 /* ==========================================================================
-   ALLO-الو — 5G SA Core, IMS VoNR & Telecom Revenue Operations
+   ALLO - الو — 5G SA Core, IMS VoNR & Telecom Revenue Operations
    Theme Stylesheet: Original Blue + Vibrant Red + Crisp White (~40% Blue / ~35% Red / ~25% White)
    ========================================================================== */
 
@@ -152,7 +152,7 @@ body {
   transform: scale(0.95);
 }
 
-/* Animated ALLO-الو Logo (Mixed Blue & Red) */
+/* Animated ALLO - الو Logo (Mixed Blue & Red) */
 .brand-logo-container {
   display: flex;
   align-items: center;
