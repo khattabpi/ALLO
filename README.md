@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/Gemini_Generated_Image_tm62untm62untm62.jpeg" alt="Mokalamati — 5G Telecom Engineering Platform" width="100%">
+  <img src="docs/images/ALLO.jpg" alt="ALLO-الو — 5G Telecom Engineering Platform" width="100%">
 </p>
 
-<h1 align="center">Mokalamati — مكالماتي</h1>
+<h1 align="center">ALLO-الو</h1>
 
 <p align="center">
   <strong>5G SA · Kamailio IMS · VoNR · Erlang/OTP Charging · Multi-PLMN Roaming</strong>
@@ -21,9 +21,9 @@
 
 ---
 
-Mokalamati is an engineering-grade 5G telecom laboratory that integrates a complete service chain — 3GPP 5G Standalone Core, multi-PLMN roaming with Local Breakout, Kamailio IMS with real VoNR voice calls over RTPEngine, an Erlang/OTP prepaid charging engine, and a live operations control center — all running on Kubernetes, fully observable through Prometheus and Grafana, and regression-tested with 212 automated checks.
+ALLO-الو is an engineering-grade 5G telecom laboratory that integrates a complete service chain — 3GPP 5G Standalone Core, multi-PLMN roaming with Local Breakout, Kamailio IMS with real VoNR voice calls over RTPEngine, an Erlang/OTP prepaid charging engine, and a live operations control center — all running on Kubernetes, fully observable through Prometheus and Grafana, and regression-tested with 212 automated checks.
 
-![Mokalamati Operations & Revenue Control Center](docs/images/GUI.png)
+![ALLO-الو Operations & Revenue Control Center](docs/images/GUI.png)
 
 ---
 
@@ -62,7 +62,7 @@ graph LR
         PROM["Prometheus :30090"]
         GRAF["Grafana :30300"]
         ALERT["Alertmanager :30093"]
-        GUI["Mokalamati GUI :8088"]
+        GUI["ALLO-الو GUI :8088"]
     end
 
     UE1 & UE2 -->|N1/N2 SCTP| AMF
@@ -84,7 +84,7 @@ graph LR
 
 ## Multi-PLMN & Roaming
 
-Mokalamati operates three PLMNs across two isolated gNodeB instances:
+ALLO-الو operates three PLMNs across two isolated gNodeB instances:
 
 | Subscriber | IMSI | Home PLMN | Serving PLMN | Roaming | gNodeB | Internet IP Range | IMS IP Range |
 | :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
@@ -274,7 +274,7 @@ charging_service_app
 
 ## Operations Control Center
 
-The Mokalamati GUI ([`services/telecom-gui/`](services/telecom-gui/)) is a zero-dependency Python HTTP server + vanilla JavaScript SPA on port `:8088`.
+The ALLO-الو GUI ([`services/telecom-gui/`](services/telecom-gui/)) is a zero-dependency Python HTTP server + vanilla JavaScript SPA on port `:8088`.
 
 **Views:**
 
@@ -288,7 +288,7 @@ The Mokalamati GUI ([`services/telecom-gui/`](services/telecom-gui/)) is a zero-
 
 **Backend integrations:** Erlang charging (`:8085`), Prometheus (`:30090`), Alertmanager (`:30093`), Kamailio S-CSCF SQLite CDRs (via `kubectl exec`), Linux netns TUN counters.
 
-**Features:** collapsible sidebar with animation, animated Mokalamati logo (blue + red SVG with wave-pulse and beacon-glow), global IMSI/MSISDN/CDR search, configurable auto-refresh (3s–30s).
+**Features:** collapsible sidebar with animation, animated ALLO-الو logo (blue + red SVG with wave-pulse and beacon-glow), global IMSI/MSISDN/CDR search, configurable auto-refresh (3s–30s).
 
 ---
 
@@ -363,7 +363,7 @@ Every subsystem ships with its own automated verification suite:
 ## Repository Structure
 
 ```
-Mokalamati/
+ALLO-الو/
 ├── configs/
 │   ├── charging/          # Tariff plans, rate plans, accounts (YAML)
 │   ├── sipp/              # SIP test scenarios
@@ -442,8 +442,8 @@ Mokalamati/
 
 ```bash
 # Clone the repository
-git clone https://github.com/khattabpi/Mokalamati.git
-cd Mokalamati
+git clone https://github.com/khattabpi/ALLO-الو.git
+cd ALLO-الو
 
 # 1. Start the Erlang/OTP charging engine (:8085)
 bash scripts/run-erlang-charging.sh start
@@ -467,7 +467,7 @@ bash scripts/run-gui.sh start
 
 | Service | URL | Protocol |
 | :--- | :--- | :--- |
-| **Mokalamati GUI** | `http://127.0.0.1:8088` | HTTP |
+| **ALLO-الو GUI** | `http://127.0.0.1:8088` | HTTP |
 | **Erlang Charging API** | `http://127.0.0.1:8085` | HTTP REST |
 | **Grafana** | `http://172.19.0.2:30300` | HTTP |
 | **Prometheus** | `http://172.19.0.2:30090` | HTTP |
@@ -582,7 +582,7 @@ Copyright © 2026 Abdulrahman Khattab.
 
 ## Built With
 
-| Project | Role in Mokalamati |
+| Project | Role in ALLO-الو |
 | :--- | :--- |
 | [Open5GS](https://open5gs.org/) | 3GPP Release 16 5G SA Core (AMF, SMF, UPF, NRF, UDM, UDR, AUSF, PCF, BSF) |
 | [UERANSIM](https://github.com/aligungr/UERANSIM) | 5G RAN simulator (gNodeB + UE with multi-PLMN and network namespace support) |

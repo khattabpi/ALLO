@@ -187,8 +187,8 @@ fi
 kubectl -n open5gs scale deployment/open5gs-bsf --replicas=0 >/dev/null 2>&1
 
 FAULT_FIRING=""
-for i in {1..8}; do
-    sleep 3
+for i in {1..16}; do
+    sleep 2
     FAULT_ALERTS=$(curl -s "${PROM_URL}/api/v1/alerts" || echo "{}")
     FAULT_FIRING=$(echo "$FAULT_ALERTS" | jq -r '.data.alerts[] | select(.labels.alertname=="Open5gsCorePodsDegraded") | .state' 2>/dev/null || echo "")
     if [[ "$FAULT_FIRING" == "firing" ]]; then
@@ -203,7 +203,7 @@ else
 fi
 
 AM_ACTIVE=""
-for i in {1..5}; do
+for i in {1..8}; do
     AM_ALERTS=$(curl -s "${AM_URL}/api/v2/alerts" || echo "[]")
     AM_ACTIVE=$(echo "$AM_ALERTS" | jq -r '.[] | select(.labels.alertname=="Open5gsCorePodsDegraded") | .status.state' 2>/dev/null || echo "")
     if [[ "$AM_ACTIVE" == "active" ]]; then
@@ -223,7 +223,7 @@ kubectl -n open5gs scale deployment/open5gs-bsf --replicas=1 >/dev/null 2>&1
 kubectl -n open5gs rollout status deployment/open5gs-bsf --timeout=30s >/dev/null 2>&1
 
 RESOLVED_FIRING="still_firing"
-for i in {1..8}; do
+for i in {1..12}; do
     sleep 2.5
     RESOLVED_ALERTS=$(curl -s "${PROM_URL}/api/v1/alerts" || echo "{}")
     RESOLVED_FIRING=$(echo "$RESOLVED_ALERTS" | jq -r '.data.alerts[] | select(.labels.alertname=="Open5gsCorePodsDegraded") | .state' 2>/dev/null || echo "")

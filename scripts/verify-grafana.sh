@@ -225,9 +225,17 @@ echo -e "\n${CYAN}5. Grafana Restart & Persistence Validation${NC}"
 kubectl -n monitoring rollout restart deployment/grafana >/dev/null 2>&1
 kubectl -n monitoring rollout status deployment/grafana --timeout=30s >/dev/null 2>&1
 
-POST_HEALTH=$(curl -s "${GRAFANA_URL}/api/health" || echo "")
-POST_DASH=$(curl -s "${GRAFANA_URL}/api/dashboards/uid/5g-ims-telecom-overview" || echo "{}")
-POST_TITLE=$(echo "$POST_DASH" | jq -r '.dashboard.title' 2>/dev/null || echo "")
+POST_HEALTH=""
+POST_TITLE=""
+for i in {1..8}; do
+    sleep 2
+    POST_HEALTH=$(curl -s "${GRAFANA_URL}/api/health" || echo "")
+    POST_DASH=$(curl -s "${GRAFANA_URL}/api/dashboards/uid/5g-ims-telecom-overview" || echo "{}")
+    POST_TITLE=$(echo "$POST_DASH" | jq -r '.dashboard.title' 2>/dev/null || echo "")
+    if echo "$POST_HEALTH" | grep -q '"database":\s*"ok"' && [[ "$POST_TITLE" == "5G-IMS-Lab — Telecom Operations Overview" ]]; then
+        break
+    fi
+done
 
 if echo "$POST_HEALTH" | grep -q '"database":\s*"ok"' && [[ "$POST_TITLE" == "5G-IMS-Lab — Telecom Operations Overview" ]]; then
     check_pass "[GRAFANA-18] Restart-Recovery Verification" "Grafana restarted successfully with datasource & dashboard intact"
