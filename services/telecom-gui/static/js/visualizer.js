@@ -94,11 +94,11 @@ const visualizer = {
     this.pipelineNodes.forEach((node, idx) => {
       const isVoice = node.category === "voice";
       const nodeClass = isVoice ? "node-voice" : "node-network";
-      const icon = isVoice ? "📡" : "🌐";
+      const dotClass = isVoice ? "status-dot-cyan" : "status-dot-green";
 
       html += `
         <div class="pipeline-node ${nodeClass} ${idx === 0 ? 'node-active' : ''}" id="pnode-${node.id}" onclick="visualizer.showNodeDetail('${node.id}')">
-          <div class="node-code">${icon} ${node.code}</div>
+          <div class="node-code"><span class="${dotClass}" style="display:inline-block; vertical-align:middle; margin-right:4px;"></span>${node.code}</div>
           <div class="node-title">${node.title}</div>
           <div class="node-subtitle">${node.subtitle}</div>
           <div class="node-tag">${node.tag}</div>
@@ -135,7 +135,7 @@ const visualizer = {
 
     container.innerHTML = `
       <!-- Home PLMN (Egypt 602/03 & 602/04) -->
-      <div class="topo-domain-box" style="border-top: 3px solid var(--accent-blue);">
+      <div class="topo-domain-box" style="border-top: 3px solid var(--blue-600);">
         <div class="topo-domain-title">
           <span>Home Network (HPLMN 602/03 &amp; 602/04)</span>
         </div>
@@ -160,7 +160,7 @@ const visualizer = {
       </div>
 
       <!-- Visited PLMN (Bosnia 218/90) -->
-      <div class="topo-domain-box" style="border-top: 3px solid var(--accent-red);">
+      <div class="topo-domain-box" style="border-top: 3px solid var(--cyan-500);">
         <div class="topo-domain-title">
           <span>Visited Network (VPLMN 218/90 BH Telecom)</span>
         </div>
@@ -185,7 +185,7 @@ const visualizer = {
       </div>
 
       <!-- Shared User Plane & IMS -->
-      <div class="topo-domain-box" style="border-top: 3px solid var(--accent-blue);">
+      <div class="topo-domain-box" style="border-top: 3px solid var(--navy-800);">
         <div class="topo-domain-title">
           <span>User Plane (UPF) &amp; IMS Service Core</span>
         </div>
@@ -210,7 +210,7 @@ const visualizer = {
       </div>
 
       <!-- Revenue & Observability -->
-      <div class="topo-domain-box" style="border-top: 3px solid var(--border-strong);">
+      <div class="topo-domain-box" style="border-top: 3px solid var(--teal-500);">
         <div class="topo-domain-title">
           <span>Revenue Engine & Observability</span>
         </div>

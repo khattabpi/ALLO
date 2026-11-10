@@ -50,13 +50,20 @@ start_service() {
 
     stop_service
 
-    echo -e "${CYAN}[*] Compiling charging_service...${NC}"
-    (cd "${SERVICE_DIR}" && rebar3 compile >/dev/null 2>&1)
+    if command -v erl >/dev/null 2>&1 && command -v rebar3 >/dev/null 2>&1; then
+        echo -e "${CYAN}[*] Compiling charging_service...${NC}"
+        (cd "${SERVICE_DIR}" && rebar3 compile >/dev/null 2>&1)
 
-    echo -e "${CYAN}[*] Starting Erlang/OTP charging daemon on port ${PORT}...${NC}"
-    cd "${SERVICE_DIR}"
-    erl -detached -pa _build/default/lib/*/ebin \
-        -eval 'application:ensure_all_started(charging_service).'
+        echo -e "${CYAN}[*] Starting Erlang/OTP charging daemon on port ${PORT}...${NC}"
+        cd "${SERVICE_DIR}"
+        erl -detached -pa _build/default/lib/*/ebin \
+            -eval 'application:ensure_all_started(charging_service).'
+    else
+        echo -e "${YELLOW}[!] Erlang/rebar3 toolchain not detected on host. Launching high-fidelity Python charging service...${NC}"
+        python3 "${REPO_ROOT}/scripts/rating-engine.py" init-db >/dev/null 2>&1 || true
+        setsid python3 "${REPO_ROOT}/services/charging-server.py" >> "${LOG_FILE}" 2>&1 < /dev/null &
+        echo $! > "${PID_FILE}"
+    fi
 
     echo -e "${CYAN}[*] Waiting for Cowboy HTTP listener on port ${PORT}...${NC}"
     READY=false

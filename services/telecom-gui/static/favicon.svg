@@ -1,30 +1,57 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" width="128" height="128" fill="none">
   <defs>
-    <linearGradient id="fav-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#38BDF8" />
-      <stop offset="100%" stop-color="#1D4ED8" />
+    <!-- Azure to Deep Blue -->
+    <linearGradient id="swirl-blue" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#38BDF8"/>
+      <stop offset="50%" stop-color="#0284C7"/>
+      <stop offset="100%" stop-color="#1D4ED8"/>
     </linearGradient>
-    <linearGradient id="fav-red" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" stop-color="#FB7185" />
-      <stop offset="100%" stop-color="#E11D48" />
+    <!-- Cyan to Teal -->
+    <linearGradient id="swirl-cyan" x1="0%" y1="100%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#06B6D4"/>
+      <stop offset="60%" stop-color="#0D9488"/>
+      <stop offset="100%" stop-color="#14B8A6"/>
     </linearGradient>
-    <filter id="fav-glow" x="-20%" y="-20%" width="140%" height="140%">
-      <feDropShadow dx="0" dy="0" stdDeviation="2" flood-color="#38BDF8" flood-opacity="0.6"/>
+    <!-- Subtle Lime / Chartreuse Glow -->
+    <linearGradient id="swirl-lime" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FACC15" stop-opacity="0.95"/>
+      <stop offset="50%" stop-color="#A3E635" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#10B981" stop-opacity="0.85"/>
+    </linearGradient>
+    <!-- Sky Blue Translucent -->
+    <linearGradient id="swirl-sky" x1="100%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#BAE6FD" stop-opacity="0.9"/>
+      <stop offset="100%" stop-color="#0284C7" stop-opacity="0.9"/>
+    </linearGradient>
+    <!-- Soft Ambient Drop Shadow -->
+    <filter id="soft-shadow" x="-15%" y="-15%" width="130%" height="130%">
+      <feDropShadow dx="0" dy="4" stdDeviation="5" flood-color="#0284C7" flood-opacity="0.25"/>
     </filter>
   </defs>
-  
-  <!-- Outer Glow Ring (Globe/Pin Ring) -->
-  <circle cx="32" cy="32" r="28" stroke="url(#fav-blue)" stroke-width="4" stroke-linecap="round" stroke-dasharray="140 30" filter="url(#fav-glow)"/>
-  
-  <!-- Ascending Voice Waveform Bars -->
-  <rect x="18" y="34" width="4" height="12" rx="2" fill="url(#fav-blue)"/>
-  <rect x="25" y="26" width="4" height="20" rx="2" fill="url(#fav-blue)"/>
-  <rect x="32" y="18" width="4" height="28" rx="2" fill="url(#fav-red)"/>
-  <rect x="39" y="24" width="4" height="22" rx="2" fill="url(#fav-red)"/>
-  
-  <!-- Ascending Upward Arrow -->
-  <path d="M38 14L48 14L48 24M48 14L34 28" stroke="url(#fav-red)" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
-  
-  <!-- Signal Pulse Beacon Point -->
-  <circle cx="48" cy="14" r="3.5" fill="#FFFFFF"/>
+
+  <g filter="url(#soft-shadow)">
+    <!-- Base Outer Boundary Circle -->
+    <circle cx="64" cy="64" r="58" fill="#F0F9FF"/>
+
+    <!-- Overlapping Ribbon 1: Bottom-Left Blue Sweep -->
+    <path d="M64 6 A58 58 0 0 1 122 64 C92 78 48 100 24 78 C12 62 10 32 64 6 Z" fill="url(#swirl-blue)" opacity="0.95"/>
+
+    <!-- Overlapping Ribbon 2: Right Cyan-Teal Sweep -->
+    <path d="M122 64 A58 58 0 0 1 64 122 C50 90 40 46 64 22 C84 10 114 18 122 64 Z" fill="url(#swirl-cyan)" opacity="0.92"/>
+
+    <!-- Overlapping Ribbon 3: Bottom Ocean Arc -->
+    <path d="M64 122 A58 58 0 0 1 6 64 C28 48 76 34 100 58 C114 74 112 104 64 122 Z" fill="url(#swirl-sky)" opacity="0.88"/>
+
+    <!-- Overlapping Ribbon 4: Top-Left Lime/Green Highlight Accent -->
+    <path d="M6 64 A58 58 0 0 1 64 6 C78 36 84 80 58 104 C40 116 12 104 6 64 Z" fill="url(#swirl-lime)" opacity="0.82" style="mix-blend-mode: multiply;"/>
+
+    <!-- Center Luminous Pure White Medallion Cutout -->
+    <circle cx="64" cy="64" r="32" fill="#FFFFFF"/>
+
+    <!-- Center Wordmark "allo 5G" -->
+    <!-- 'allo' text in Deep Navy -->
+    <text x="60" y="69" text-anchor="middle" font-family="'Inter', -apple-system, system-ui, sans-serif" font-size="21" font-weight="800" fill="#0B192C" letter-spacing="-0.8">allo</text>
+    <!-- '5G' superscript badge -->
+    <text x="80" y="55" font-family="'Inter', -apple-system, system-ui, sans-serif" font-size="8" font-weight="900" fill="#0284C7" letter-spacing="-0.2">5G</text>
+  </g>
 </svg>

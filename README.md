@@ -1,8 +1,8 @@
 <p align="center">
-  <img src="docs/images/ALLO.jpg" alt="ALLO - الو — 5G Telecom Engineering Platform" width="100%">
+  <img src="docs/images/allo-5g-logo.jpg" alt="ALLO 5G — Telecom Engineering Platform" width="220" style="border-radius: 50%;">
 </p>
 
-<h1 align="center">ALLO - الو</h1>
+<h1 align="center">ALLO 5G</h1>
 
 <p align="center">
   <strong>5G SA · Kamailio IMS · VoNR · Erlang/OTP Charging · Multi-PLMN Roaming</strong>

@@ -250,6 +250,8 @@ class TelecomApiHandler(BaseHTTPRequestHandler):
             self.handle_api_network_topology()
         elif url_path == "/api/system/health":
             self.handle_api_system_health()
+        elif url_path == "/api/status":
+            self.handle_api_system_health()
         elif url_path == "/api/actions/call-status":
             self.handle_action_call_status()
         elif url_path.startswith("/api/"):
@@ -943,6 +945,10 @@ class TelecomApiHandler(BaseHTTPRequestHandler):
                 mime_type = "application/javascript"
             elif filepath.endswith(".png"):
                 mime_type = "image/png"
+            elif filepath.endswith(".jpg") or filepath.endswith(".jpeg"):
+                mime_type = "image/jpeg"
+            elif filepath.endswith(".webp"):
+                mime_type = "image/webp"
             elif filepath.endswith(".svg"):
                 mime_type = "image/svg+xml"
             elif filepath.endswith(".json"):

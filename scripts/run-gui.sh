@@ -113,21 +113,21 @@ status_gui() {
         echo -e "${BOLD}Backend Connectivity Check:${NC}"
         
         # Test GUI API
-        if curl -s -f "http://127.0.0.1:${PORT}/api/system/health" >/dev/null 2>&1; then
+        if curl -s -f --connect-timeout 2 "http://127.0.0.1:${PORT}/api/system/health" >/dev/null 2>&1; then
             echo -e "  [✓] GUI REST API (:8088):         ${GREEN}UP & RESPONSIVE${NC}"
         else
             echo -e "  [✗] GUI REST API (:8088):         ${RED}DOWN OR UNRESPONSIVE${NC}"
         fi
 
         # Test Erlang Charging
-        if curl -s -f "http://127.0.0.1:8085/health" >/dev/null 2>&1; then
+        if curl -s -f --connect-timeout 2 "http://127.0.0.1:8085/health" >/dev/null 2>&1; then
             echo -e "  [✓] Erlang Charging Engine (:8085): ${GREEN}CONNECTED${NC}"
         else
             echo -e "  [!] Erlang Charging Engine (:8085): ${YELLOW}OFFLINE${NC}"
         fi
 
         # Test Prometheus
-        if curl -s -f "http://172.19.0.2:30090/-/ready" >/dev/null 2>&1; then
+        if curl -s -f --connect-timeout 2 "http://172.19.0.2:30090/-/ready" >/dev/null 2>&1; then
             echo -e "  [✓] Prometheus Telemetry (:30090):  ${GREEN}CONNECTED${NC}"
         else
             echo -e "  [!] Prometheus Telemetry (:30090):  ${YELLOW}OFFLINE${NC}"

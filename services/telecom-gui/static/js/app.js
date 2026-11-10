@@ -46,6 +46,26 @@ const app = {
       });
     }
 
+    // Dark Mode Theme Toggle
+    const btnThemeToggle = document.getElementById("theme-toggle-btn");
+    const currentTheme = localStorage.getItem("allo-theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    if (currentTheme === "dark") {
+      document.documentElement.setAttribute("data-theme", "dark");
+    }
+    if (btnThemeToggle) {
+      btnThemeToggle.addEventListener("click", () => {
+        const isDark = document.documentElement.getAttribute("data-theme") === "dark";
+        const newTheme = isDark ? "light" : "dark";
+        if (newTheme === "dark") {
+          document.documentElement.setAttribute("data-theme", "dark");
+        } else {
+          document.documentElement.removeAttribute("data-theme");
+        }
+        localStorage.setItem("allo-theme", newTheme);
+        this.showToast(`Switched to ${newTheme} mode`, "info");
+      });
+    }
+
     // Auto-refresh select
     const refreshSelect = document.getElementById("refresh-select");
     if (refreshSelect) {
@@ -118,28 +138,50 @@ const app = {
 
     // Global Search Input
     const searchInput = document.getElementById("global-search-input");
-    if (searchInput) {
+    const searchDropdown = document.getElementById("search-results-dropdown");
+    if (searchInput && searchDropdown) {
+      let activeIdx = -1;
+
       searchInput.addEventListener("input", (e) => {
         const query = e.target.value.toLowerCase().trim();
-        if (!query) {
-          this.renderSubscribers(this.data.subscribers || []);
-          this.renderCalls(this.data.calls || []);
+        activeIdx = -1;
+        if (!query || query.length < 1) {
+          searchDropdown.classList.remove("active");
+          searchDropdown.innerHTML = "";
           return;
         }
-        const filteredSubs = (this.data.subscribers || []).filter(s => 
-          s.name.toLowerCase().includes(query) ||
-          s.imsi.includes(query) ||
-          s.msisdn.includes(query) ||
-          s.account_id.toLowerCase().includes(query)
-        );
-        this.renderSubscribers(filteredSubs);
-        
-        const filteredCalls = (this.data.calls || []).filter(c =>
-          c.caller.toLowerCase().includes(query) ||
-          c.callee.toLowerCase().includes(query) ||
-          String(c.id).includes(query)
-        );
-        this.renderCalls(filteredCalls);
+        const results = this._globalSearch(query);
+        this._renderSearchDropdown(results, query, searchDropdown);
+      });
+
+      searchInput.addEventListener("keydown", (e) => {
+        const items = searchDropdown.querySelectorAll(".search-result-item");
+        if (!items.length) return;
+        if (e.key === "ArrowDown") {
+          e.preventDefault();
+          activeIdx = Math.min(activeIdx + 1, items.length - 1);
+          items.forEach((el, i) => el.classList.toggle("active", i === activeIdx));
+          items[activeIdx]?.scrollIntoView({ block: "nearest" });
+        } else if (e.key === "ArrowUp") {
+          e.preventDefault();
+          activeIdx = Math.max(activeIdx - 1, 0);
+          items.forEach((el, i) => el.classList.toggle("active", i === activeIdx));
+          items[activeIdx]?.scrollIntoView({ block: "nearest" });
+        } else if (e.key === "Enter") {
+          e.preventDefault();
+          if (activeIdx >= 0 && items[activeIdx]) items[activeIdx].click();
+          else if (items[0]) items[0].click();
+        } else if (e.key === "Escape") {
+          searchDropdown.classList.remove("active");
+          searchInput.blur();
+        }
+      });
+
+      // Close dropdown on outside click
+      document.addEventListener("click", (e) => {
+        if (!e.target.closest(".header-search-wrapper")) {
+          searchDropdown.classList.remove("active");
+        }
       });
     }
   },
@@ -408,7 +450,7 @@ const app = {
                 <code>${sub.internet.ip}</code>
               </div>
               <div class="slice-badge slice-badge-voice">
-                <div class="slice-badge-title" style="color: var(--brand-red);">IMS SLICE (SST:1)</div>
+                <div class="slice-badge-title" style="color: var(--cyan-600);">IMS SLICE (SST:1)</div>
                 <code>${sub.ims.ip}</code>
               </div>
             </div>
@@ -937,6 +979,152 @@ const app = {
       toast.style.transition = "all 0.2s ease";
       setTimeout(() => toast.remove(), 250);
     }, 3500);
+  },
+
+  // ─── Global Search Engine ───────────────────────────────────────
+  _globalSearch(query) {
+    const results = [];
+    const q = query.toLowerCase();
+
+    // Search subscribers
+    (this.data.subscribers || []).forEach(s => {
+      const fields = [s.name, s.imsi, s.msisdn, s.account_id, s.sip_uri, s.hplmn, s.serving_plmn, s.rate_plan, s.gnb, s.internet?.ip, s.ims?.ip].filter(Boolean);
+      if (fields.some(f => f.toLowerCase().includes(q))) {
+        results.push({
+          category: "Subscribers",
+          tab: "subscribers",
+          icon: "👤",
+          title: s.name,
+          sub: `IMSI: ${s.imsi} · MSISDN: ${s.msisdn}`,
+          badge: s.roaming ? "Roaming" : "Home"
+        });
+      }
+    });
+
+    // Search overview NFs
+    const nfs = this.data.overview?.nfs || [];
+    nfs.forEach(nf => {
+      const fields = [nf.name, nf.type, nf.status, nf.ip].filter(Boolean);
+      if (fields.some(f => f.toLowerCase().includes(q))) {
+        results.push({
+          category: "Network Functions",
+          tab: "overview",
+          icon: "⚙️",
+          title: nf.name || nf.type,
+          sub: `${nf.type || ""} · ${nf.ip || ""} · ${nf.status || ""}`,
+          badge: nf.status || ""
+        });
+      }
+    });
+
+    // Search calls / CDRs
+    (this.data.calls || []).forEach(c => {
+      const fields = [c.caller, c.callee, String(c.id), c.status, c.type].filter(Boolean);
+      if (fields.some(f => f.toLowerCase().includes(q))) {
+        results.push({
+          category: "IMS Calls & CDRs",
+          tab: "calls",
+          icon: "📞",
+          title: `CDR #${c.id}: ${c.caller} → ${c.callee}`,
+          sub: `${c.type || "Voice"} · ${c.status || ""}`,
+          badge: c.status || ""
+        });
+      }
+    });
+
+    // Search tariffs
+    (this.data.tariffs || []).forEach(t => {
+      const fields = [t.id, t.name, t.type, t.description, t.service_type].filter(Boolean);
+      if (fields.some(f => f.toLowerCase().includes(q))) {
+        results.push({
+          category: "Tariffs",
+          tab: "charging",
+          icon: "📋",
+          title: t.name || t.id,
+          sub: `${t.service_type || t.type || ""} · Rate: ${t.rate_per_unit ?? ""} ${t.currency || "LAB"}/${t.unit || "unit"}`,
+          badge: t.type || ""
+        });
+      }
+    });
+
+    // Search transactions
+    (this.data.transactions || []).forEach(tx => {
+      const fields = [tx.id, tx.account_id, tx.type, tx.description, String(tx.amount)].filter(Boolean);
+      if (fields.some(f => f.toLowerCase().includes(q))) {
+        results.push({
+          category: "Transactions",
+          tab: "charging",
+          icon: "💳",
+          title: `${tx.type || "Transaction"}: ${tx.description || tx.id}`,
+          sub: `Account: ${tx.account_id || ""} · Amount: ${tx.amount ?? ""} LAB`,
+          badge: tx.type || ""
+        });
+      }
+    });
+
+    return results;
+  },
+
+  _highlightMatch(text, query) {
+    if (!text) return "";
+    const idx = text.toLowerCase().indexOf(query.toLowerCase());
+    if (idx === -1) return text;
+    return text.substring(0, idx) + "<mark>" + text.substring(idx, idx + query.length) + "</mark>" + text.substring(idx + query.length);
+  },
+
+  _renderSearchDropdown(results, query, dropdown) {
+    if (results.length === 0) {
+      dropdown.innerHTML = `
+        <div class="search-no-results">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+            <line x1="8" y1="8" x2="14" y2="14" stroke-opacity="0.5"></line>
+            <line x1="14" y1="8" x2="8" y2="14" stroke-opacity="0.5"></line>
+          </svg>
+          No results found for "<strong>${query}</strong>"
+        </div>`;
+      dropdown.classList.add("active");
+      return;
+    }
+
+    // Group by category
+    const grouped = {};
+    results.forEach(r => {
+      if (!grouped[r.category]) grouped[r.category] = [];
+      grouped[r.category].push(r);
+    });
+
+    let html = "";
+    for (const [category, items] of Object.entries(grouped)) {
+      html += `<div class="search-category-label">${category} (${items.length})</div>`;
+      items.slice(0, 5).forEach(item => {
+        html += `
+          <div class="search-result-item" data-tab="${item.tab}">
+            <div class="search-result-icon">${item.icon}</div>
+            <div class="search-result-text">
+              <div class="search-result-title">${this._highlightMatch(item.title, query)}</div>
+              <div class="search-result-sub">${item.sub}</div>
+            </div>
+            <span class="search-result-badge">${item.badge}</span>
+          </div>`;
+      });
+      if (items.length > 5) {
+        html += `<div class="search-result-item" data-tab="${items[0].tab}" style="justify-content:center; color: var(--blue-600); font-size: 0.72rem; font-weight: 600;">+ ${items.length - 5} more in ${category}</div>`;
+      }
+    }
+
+    dropdown.innerHTML = html;
+    dropdown.classList.add("active");
+
+    // Click handlers — navigate to the correct tab
+    dropdown.querySelectorAll(".search-result-item").forEach(el => {
+      el.addEventListener("click", () => {
+        const tab = el.dataset.tab;
+        if (tab) this.switchTab(tab);
+        dropdown.classList.remove("active");
+        document.getElementById("global-search-input").value = "";
+      });
+    });
   }
 };
 

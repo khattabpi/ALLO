@@ -1,6 +1,12 @@
 # Documentation Index
 
-> Reference index for technical architecture, validation, and troubleshooting in 5G-IMS-Lab.
+> Reference index for technical architecture, operations, validation, and troubleshooting in ALLO - الو.
+
+---
+
+## 🚀 Operations & Runbook
+
+- [**Platform Operations & Runbook**](OPERATIONS.md) — Comprehensive guide on prerequisites, end-to-end startup sequence, Web GUI operations, CLI commands, KPI measurements, monitoring, verification, shutdown, and troubleshooting.
 
 ---
 

@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ALLO - الو — Telecom Operations & Revenue Control Center</title>
+  <title>ALLO 5G — Telecom Operations & Revenue Control Center</title>
   <link rel="icon" type="image/svg+xml" href="favicon.svg">
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -13,12 +13,12 @@
 <body>
 
   <!-- ================================================================= -->
-  <!-- TOP HEADER BAR (Original Vibrant Blue with Animated Logo & Toggle)-->
+  <!-- TOP HEADER BAR (Premium Light Enterprise Navigation)               -->
   <!-- ================================================================= -->
   <header class="top-header-bar">
     <div class="header-brand-left">
       <!-- Sidebar Collapse / Expand Toggle Button -->
-      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar">
+      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar" aria-label="Toggle Navigation Sidebar">
         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
           <line x1="3" y1="12" x2="21" y2="12"></line>
           <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -26,34 +26,16 @@
         </svg>
       </button>
 
-      <!-- Animated ALLO-الو Logo (Network Pin + Rising Waveform Arrow) -->
-      <div class="brand-logo-container" onclick="app.switchTab('overview')">
-        <svg class="allo-logo-mark" viewBox="0 0 38 38" fill="none">
-          <defs>
-            <linearGradient id="logo-blue" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#38BDF8"/>
-              <stop offset="100%" stop-color="#2563EB"/>
-            </linearGradient>
-            <linearGradient id="logo-red" x1="0%" y1="0%" x2="100%" y2="100%">
-              <stop offset="0%" stop-color="#FB7185"/>
-              <stop offset="100%" stop-color="#E11D48"/>
-            </linearGradient>
-          </defs>
-          <!-- Concentric Outer Pin Arc -->
-          <circle cx="19" cy="19" r="16" stroke="url(#logo-blue)" stroke-width="2.5" stroke-linecap="round" stroke-dasharray="78 22" class="logo-arc"/>
-          <!-- Ascending Soundwave Bars -->
-          <rect x="11" y="20" width="2.5" height="7" rx="1.25" fill="url(#logo-blue)" class="logo-wave-1"/>
-          <rect x="15" y="15" width="2.5" height="12" rx="1.25" fill="url(#logo-blue)" class="logo-wave-2"/>
-          <rect x="19" y="11" width="2.5" height="16" rx="1.25" fill="url(#logo-red)" class="logo-wave-3"/>
-          <rect x="23" y="14" width="2.5" height="13" rx="1.25" fill="url(#logo-red)" class="logo-wave-4"/>
-          <!-- Ascending Signal Arrow -->
-          <path d="M22 8L29 8L29 15M29 8L20 17" stroke="url(#logo-red)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" class="logo-arrow"/>
-          <!-- Luminous Signal Beacon Point -->
-          <circle cx="29" cy="8" r="2.2" fill="#FFFFFF" class="logo-beacon"/>
-        </svg>
-        <span class="brand-text-wrapper">
-          <span class="brand-allo">ALLO</span><span class="brand-dash"> - </span><span class="brand-arabic">الو</span>
-        </span>
+      <!-- Official ALLO 5G Logo & Brand Badge -->
+      <div class="brand-logo-container" onclick="app.switchTab('overview')" title="ALLO 5G Control Center">
+        <img src="images/allo-5g-logo.jpg" alt="ALLO 5G" class="allo-brand-logo-img">
+        <div class="brand-text-block">
+          <div class="brand-title-row">
+            <span class="brand-allo">allo</span>
+            <span class="brand-5g-tag">5G</span>
+          </div>
+          <span class="brand-platform-sub">Control Center</span>
+        </div>
       </div>
 
       <span class="header-doc-title" style="display:none;">Telecom Operations &amp; Revenue Control Center</span>
@@ -65,17 +47,26 @@
         <svg class="header-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" placeholder="Search IMSI, MSISDN, Slice, CDR ID..." class="header-search-input" id="global-search-input">
+        <input type="text" placeholder="Search subscribers, NFs, tariffs, transactions..." class="header-search-input" id="global-search-input" autocomplete="off">
+        <div class="search-results-dropdown" id="search-results-dropdown"></div>
       </div>
     </div>
 
     <!-- Right Status Pills -->
     <div class="header-tools-right">
       <span class="header-status-pill"><span class="status-dot-green"></span> 5GC: Operational</span>
-      <span class="header-status-pill"><span class="status-dot-green"></span> VoNR: Active</span>
+      <span class="header-status-pill"><span class="status-dot-cyan"></span> VoNR: Active</span>
+      <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle dark mode">
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        </svg>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        </svg>
+      </button>
       <div class="header-user-profile">
         <span class="header-user-avatar">OP</span>
-        <span>NOC Admin</span>
+        <span class="header-user-name">NOC Admin</span>
       </div>
     </div>
   </header>
@@ -231,7 +222,7 @@
               <div class="chart-container">
                 <div class="chart-legend">
                   <div class="legend-item">
-                    <span class="legend-dot-red"></span>
+                    <span class="legend-dot-cyan"></span>
                     <span>VoNR Traffic (Calls/hr)</span>
                   </div>
                   <div class="legend-item">
@@ -240,7 +231,18 @@
                   </div>
                 </div>
                 <div class="svg-chart-wrapper" id="overview-chart-wrapper">
-                  <svg class="svg-chart" viewBox="0 0 360 145">
+                  <svg class="svg-chart" viewBox="0 0 360 145" preserveAspectRatio="none">
+                    <defs>
+                      <linearGradient id="chart-grad-blue" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#0284C7" stop-opacity="0.22"/>
+                        <stop offset="100%" stop-color="#0284C7" stop-opacity="0.0"/>
+                      </linearGradient>
+                      <linearGradient id="chart-grad-cyan" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.22"/>
+                        <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.0"/>
+                      </linearGradient>
+                    </defs>
+
                     <!-- Grid Lines -->
                     <line x1="30" y1="15" x2="350" y2="15" stroke="#E2E8F0" stroke-dasharray="3,3"/>
                     <line x1="30" y1="50" x2="350" y2="50" stroke="#E2E8F0" stroke-dasharray="3,3"/>
@@ -248,27 +250,31 @@
                     <line x1="30" y1="120" x2="350" y2="120" stroke="#CBD5E1"/>
 
                     <!-- Y-Axis Labels -->
-                    <text x="5" y="19" font-size="9" fill="#94A3B8">100</text>
-                    <text x="5" y="54" font-size="9" fill="#94A3B8">50</text>
-                    <text x="5" y="89" font-size="9" fill="#94A3B8">25</text>
-                    <text x="5" y="124" font-size="9" fill="#94A3B8">0</text>
+                    <text x="5" y="19" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">100</text>
+                    <text x="5" y="54" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">50</text>
+                    <text x="5" y="89" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">25</text>
+                    <text x="5" y="124" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">0</text>
 
-                    <!-- Revenue Line (Blue #1D4ED8) -->
-                    <polyline fill="none" stroke="#1D4ED8" stroke-width="2.5" points="30,110 80,90 130,80 180,45 230,55 280,35 330,22"/>
+                    <!-- Shaded Underlay -->
+                    <polygon fill="url(#chart-grad-blue)" points="30,120 30,110 80,90 130,80 180,45 230,55 280,35 330,22 330,120"/>
+                    <polygon fill="url(#chart-grad-cyan)" points="30,120 30,100 80,70 130,60 180,30 230,40 280,25 330,15 330,120"/>
 
-                    <!-- Call Traffic Line (Red #D32F2F) -->
-                    <polyline fill="none" stroke="#D32F2F" stroke-width="2.5" points="30,100 80,70 130,60 180,30 230,40 280,25 330,15"/>
+                    <!-- Revenue Line (Vibrant Blue #0284C7) -->
+                    <polyline fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="30,110 80,90 130,80 180,45 230,55 280,35 330,22"/>
+
+                    <!-- Call Traffic Line (Luminous Cyan #06B6D4) -->
+                    <polyline fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="30,100 80,70 130,60 180,30 230,40 280,25 330,15"/>
 
                     <!-- Points -->
-                    <circle cx="330" cy="22" r="4" fill="#1D4ED8"/>
-                    <circle cx="330" cy="15" r="4" fill="#D32F2F"/>
+                    <circle cx="330" cy="22" r="4.5" fill="#FFFFFF" stroke="#0284C7" stroke-width="2.5"/>
+                    <circle cx="330" cy="15" r="4.5" fill="#FFFFFF" stroke="#06B6D4" stroke-width="2.5"/>
 
                     <!-- X-Axis Labels -->
-                    <text x="30" y="138" font-size="9" fill="#94A3B8">00:00</text>
-                    <text x="105" y="138" font-size="9" fill="#94A3B8">06:00</text>
-                    <text x="180" y="138" font-size="9" fill="#94A3B8">12:00</text>
-                    <text x="255" y="138" font-size="9" fill="#94A3B8">18:00</text>
-                    <text x="325" y="138" font-size="9" fill="#94A3B8">Now</text>
+                    <text x="30" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">00:00</text>
+                    <text x="105" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">06:00</text>
+                    <text x="180" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">12:00</text>
+                    <text x="255" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">18:00</text>
+                    <text x="325" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">Now</text>
                   </svg>
                 </div>
               </div>
@@ -333,14 +339,14 @@
       <!-- VIEW 3: IMS CALLS & MEDIA                                     -->
       <!-- ============================================================= -->
       <section id="view-calls" class="view-panel">
-        <div class="panel-header" style="border-left-color: var(--primary-red);">
+        <div class="panel-header">
           <div>
             <h2>IMS Signaling, RTP Media &amp; VoNR Call Control</h2>
             <p class="subtitle">SIP Digest MD5 sessions, RTPEngine SDP proxying, real-time bi-directional G.711 voice media, user-controlled duration &amp; rated billing events</p>
           </div>
           <div class="header-actions">
             <button class="btn btn-primary" id="btn-trigger-domestic">Quick Domestic (UE1 → UE2)</button>
-            <button class="btn btn-outline-red" id="btn-trigger-roaming">Quick Roaming (UE1 → UE3)</button>
+            <button class="btn btn-outline-cyan" id="btn-trigger-roaming">Quick Roaming (UE1 → UE3)</button>
           </div>
         </div>
 
@@ -539,7 +545,7 @@
       <!-- VIEW 4: REVENUE & CHARGING                                    -->
       <!-- ============================================================= -->
       <section id="view-charging" class="view-panel">
-        <div class="panel-header" style="border-left-color: var(--primary-red);">
+        <div class="panel-header">
           <div>
             <h2>Erlang/OTP Telecom Revenue &amp; Rating Engine</h2>
             <p class="subtitle">Double-entry prepaid balance ledger, real-time tariffs, idempotency, and automated financial audits</p>
