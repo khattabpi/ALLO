@@ -66,7 +66,7 @@ Versions below come from image tags, lock/config files, or the repository's depl
 | Monitoring | Prometheus `v2.45.0`, Grafana `10.4.0`, Alertmanager `v0.25.0` | Scraping, dashboards, and alert delivery |
 | Frontend | Native HTML, CSS, and JavaScript served by Python; no npm build step is used by the GUI runner | ALLO Control Center |
 
-The root package.json declares React, React DOM, XYFlow, and related JavaScript dependencies, but it defines no build scripts and the current Control Center does not import them. They are not required to run the checked-in frontend.
+The root `package.json` declares React, React DOM, XYFlow, and related JavaScript dependencies, but it defines no build scripts and the current Control Center does not import them. They are not required to run the checked-in frontend.
 
 ## Capabilities
 
@@ -164,51 +164,93 @@ The cluster is defined by `k8s/kind-config.yaml`; core, IMS, and monitoring reso
 
 ## End-to-end service chain
 
+The diagram shows a UE1 → UE2 call between the two home subscribers. It has four phases: 5G attach and IMS PDU sessions, SIP registration with Digest authentication, call setup and media through RTPEngine, and teardown followed by CDR collection and charging.
+
 ~~~mermaid
 sequenceDiagram
     autonumber
-    participant UE1 as Caller UERANSIM UE
-    participant UE2 as Callee UERANSIM UE
-    participant GNB as Home / visited gNodeB
+    participant UE1 as Caller UE1
+    participant UE2 as Callee UE2
+    participant GNB as gNodeB
     participant AMF as Open5GS AMF
     participant SMF as Open5GS SMF
-    participant UPF as Shared Open5GS UPF
+    participant UPF as Shared UPF
     participant P as Kamailio P-CSCF
     participant I as Kamailio I-CSCF
     participant S as Kamailio S-CSCF
     participant RTP as RTPEngine
-    participant TEST as Call / usage script
-    participant CHG as Charging API
     participant CDR as S-CSCF SQLite CDR
+    participant TEST as Call and usage script
+    participant CHG as Charging API
 
-    UE1->>GNB: Simulated NR access
-    UE2->>GNB: Simulated NR access
-    GNB->>AMF: N2 NGAP over SCTP
-    AMF->>SMF: 5G core service-based control
-    SMF->>UPF: N4 PFCP session programming
-    GNB->>UPF: N3 GTP-U user plane
-    UE1->>P: IMS PDU session; SIP REGISTER
-    P->>I: Route registration / session
-    I->>S: Resolve subscriber and registrar state
-    S-->>UE1: SIP Digest challenge and registration response
+    rect rgb(235, 242, 255)
+    Note over UE1,UPF: Phase 1 - 5G registration and IMS PDU session
+    UE1->>GNB: Simulated NR access and NAS registration
+    GNB->>AMF: NGAP Initial UE Message over N2
+    AMF-->>UE1: Registration Accept after AUSF and UDM authentication
+    UE1->>AMF: PDU Session Establishment for the ims DNN
+    AMF->>SMF: Create SM context
+    SMF->>UPF: PFCP session establishment over N4
+    SMF-->>AMF: Session accepted with UE IP
+    AMF-->>GNB: PDU Session Resource Setup over N2
+    GNB-->>UE1: PDU session ready, N3 GTP-U tunnel to UPF
+    Note over UE2,UPF: UE2 repeats the same attach and IMS PDU session procedure
+    end
+
+    rect rgb(235, 250, 240)
+    Note over UE1,S: Phase 2 - SIP registration (UE2 registers the same way)
+    UE1->>P: SIP REGISTER via gNodeB and UPF
+    P->>I: Forward REGISTER
+    I->>S: Resolve registrar for the subscriber
+    S-->>P: 401 Unauthorized with Digest challenge
+    P-->>UE1: 401 Unauthorized
+    UE1->>P: SIP REGISTER with Digest credentials
+    P->>I: Forward authenticated REGISTER
+    I->>S: Route to registrar
+    S-->>P: 200 OK, contact stored
+    P-->>UE1: 200 OK
+    end
+
+    rect rgb(255, 247, 232)
+    Note over UE1,RTP: Phase 3 - call setup and media
     UE1->>P: SIP INVITE with SDP offer
-    P->>I: Forward SIP dialog
+    P->>RTP: NG offer
+    RTP-->>P: SDP rewritten to RTPEngine address
+    P->>I: Forward INVITE
     I->>S: Route within IMS domain
-    S->>P: Route to registered callee
-    P->>UE2: SIP INVITE
-    UE2-->>P: 180 Ringing, then 200 OK with SDP answer
-    P->>RTP: RTPEngine offer / answer control
-    RTP-->>P: Rewritten SDP
+    S->>P: Route to the registered contact of UE2
+    P->>UE2: SIP INVITE via UPF and gNodeB
+    UE2-->>P: 180 Ringing
+    P-->>UE1: 180 Ringing
+    UE2-->>P: 200 OK with SDP answer
+    P->>RTP: NG answer
+    RTP-->>P: SDP rewritten to RTPEngine address
+    P-->>UE1: 200 OK with rewritten SDP
+    UE1->>P: ACK
+    P->>UE2: ACK
     UE1->>RTP: G.711 PCMU RTP media
     RTP->>UE2: Relayed RTP media
     UE2->>RTP: Return RTP media
     RTP->>UE1: Relayed RTP media
+    end
+
+    rect rgb(250, 238, 245)
+    Note over UE1,CHG: Phase 4 - teardown, CDR, and charging
     UE1->>P: SIP BYE
+    P->>I: Forward BYE
+    I->>S: Route BYE
     S->>CDR: Store completed dialog CDR
+    S->>P: Forward BYE toward UE2
+    P->>UE2: SIP BYE
+    UE2-->>P: 200 OK
+    P-->>UE1: 200 OK
+    P->>RTP: NG delete, media session closed
+    TEST->>CDR: Read completed CDR
     TEST->>CHG: POST completed call usage to /v1/charging/events
+    end
 ~~~
 
-A successful call exercises both the 5G user plane and IMS signaling: SIP uses the UE's `ims` PDU session, while SDP negotiation directs media through RTPEngine. The call and usage scripts collect signaling, media, and billing evidence from the active lab rather than from a generated dashboard fixture.
+A successful call exercises both the 5G user plane and IMS signaling. SIP between each UE and the P-CSCF travels over the UE's `ims` PDU session (gNodeB, N3 GTP-U, shared UPF), while SDP negotiation directs media through RTPEngine. The call and usage scripts collect signaling, media, and billing evidence from the active lab rather than from a generated dashboard fixture.
 
 ## Billing and charging
 
@@ -369,7 +411,7 @@ rm -f /tmp/kind
 
 KVER=$(curl -fsSL --retry 5 https://dl.k8s.io/release/stable.txt)
 curl -fL --retry 5 -o /tmp/kubectl \
-  "https://dl.k8s.io/release/\${KVER}/bin/linux/amd64/kubectl"
+  "https://dl.k8s.io/release/${KVER}/bin/linux/amd64/kubectl"
 sudo install /tmp/kubectl /usr/local/bin/kubectl
 rm -f /tmp/kubectl
 ~~~
