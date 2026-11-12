@@ -171,83 +171,73 @@ sequenceDiagram
     autonumber
     participant UE1 as Caller UE1
     participant UE2 as Callee UE2
-    participant GNB as gNodeB
+    participant GNB as UERANSIM gNodeB
     participant AMF as Open5GS AMF
     participant SMF as Open5GS SMF
-    participant UPF as Shared UPF
-    participant P as Kamailio P-CSCF
-    participant I as Kamailio I-CSCF
-    participant S as Kamailio S-CSCF
+    participant UPF as Shared Open5GS UPF
+    participant PCSCF as Kamailio P-CSCF
+    participant ICSCF as Kamailio I-CSCF
+    participant SCSCF as Kamailio S-CSCF
     participant RTP as RTPEngine
     participant CDR as S-CSCF SQLite CDR
     participant TEST as Call and usage script
     participant CHG as Charging API
 
-    rect rgb(235, 242, 255)
-    Note over UE1,UPF: Phase 1 - 5G registration and IMS PDU session
+    Note over UE1,UPF: Both UEs attach and establish an IMS PDU session
     UE1->>GNB: Simulated NR access and NAS registration
     GNB->>AMF: NGAP Initial UE Message over N2
-    AMF-->>UE1: Registration Accept after AUSF and UDM authentication
-    UE1->>AMF: PDU Session Establishment for the ims DNN
-    AMF->>SMF: Create SM context
-    SMF->>UPF: PFCP session establishment over N4
-    SMF-->>AMF: Session accepted with UE IP
-    AMF-->>GNB: PDU Session Resource Setup over N2
-    GNB-->>UE1: PDU session ready, N3 GTP-U tunnel to UPF
-    Note over UE2,UPF: UE2 repeats the same attach and IMS PDU session procedure
-    end
+    AMF-->>UE1: Registration Accept after subscriber authentication
+    UE1->>AMF: Request IMS PDU session
+    AMF->>SMF: Create session context
+    SMF->>UPF: Program session over N4 PFCP
+    SMF-->>AMF: Session accepted with UE address
+    AMF-->>GNB: Set up PDU session resources over N2
+    GNB-->>UE1: PDU session ready over N3 GTP-U
+    Note over UE2,UPF: UE2 follows the same attach and session procedure
 
-    rect rgb(235, 250, 240)
-    Note over UE1,S: Phase 2 - SIP registration (UE2 registers the same way)
-    UE1->>P: SIP REGISTER via gNodeB and UPF
-    P->>I: Forward REGISTER
-    I->>S: Resolve registrar for the subscriber
-    S-->>P: 401 Unauthorized with Digest challenge
-    P-->>UE1: 401 Unauthorized
-    UE1->>P: SIP REGISTER with Digest credentials
-    P->>I: Forward authenticated REGISTER
-    I->>S: Route to registrar
-    S-->>P: 200 OK, contact stored
-    P-->>UE1: 200 OK
-    end
+    Note over UE1,SCSCF: SIP registration with Digest authentication
+    UE1->>PCSCF: SIP REGISTER
+    PCSCF->>ICSCF: Forward registration request
+    ICSCF->>SCSCF: Resolve subscriber and registrar
+    SCSCF-->>PCSCF: 401 Digest authentication challenge
+    PCSCF-->>UE1: 401 Digest authentication challenge
+    UE1->>PCSCF: SIP REGISTER with Digest credentials
+    PCSCF->>ICSCF: Forward authenticated registration
+    ICSCF->>SCSCF: Route to registrar
+    SCSCF-->>PCSCF: 200 OK and store contact
+    PCSCF-->>UE1: 200 OK
+    Note over UE2,SCSCF: UE2 registers in the same way
 
-    rect rgb(255, 247, 232)
-    Note over UE1,RTP: Phase 3 - call setup and media
-    UE1->>P: SIP INVITE with SDP offer
-    P->>RTP: NG offer
-    RTP-->>P: SDP rewritten to RTPEngine address
-    P->>I: Forward INVITE
-    I->>S: Route within IMS domain
-    S->>P: Route to the registered contact of UE2
-    P->>UE2: SIP INVITE via UPF and gNodeB
-    UE2-->>P: 180 Ringing
-    P-->>UE1: 180 Ringing
-    UE2-->>P: 200 OK with SDP answer
-    P->>RTP: NG answer
-    RTP-->>P: SDP rewritten to RTPEngine address
-    P-->>UE1: 200 OK with rewritten SDP
-    UE1->>P: ACK
-    P->>UE2: ACK
+    Note over UE1,UE2: SIP call setup and media
+    UE1->>PCSCF: SIP INVITE with SDP offer
+    PCSCF->>RTP: RTPEngine offer control
+    RTP-->>PCSCF: SDP updated with media relay address
+    PCSCF->>ICSCF: Forward INVITE
+    ICSCF->>SCSCF: Route within IMS domain
+    SCSCF->>PCSCF: Resolve registered callee contact
+    PCSCF->>UE2: SIP INVITE
+    UE2-->>PCSCF: 180 Ringing
+    PCSCF-->>UE1: 180 Ringing
+    UE2-->>PCSCF: 200 OK with SDP answer
+    PCSCF->>RTP: RTPEngine answer control
+    RTP-->>PCSCF: SDP updated for media relay
+    PCSCF-->>UE1: 200 OK with SDP answer
+    UE1->>PCSCF: ACK
+    PCSCF->>UE2: ACK
     UE1->>RTP: G.711 PCMU RTP media
-    RTP->>UE2: Relayed RTP media
+    RTP->>UE2: Relay media packets
     UE2->>RTP: Return RTP media
-    RTP->>UE1: Relayed RTP media
-    end
+    RTP->>UE1: Relay media packets
 
-    rect rgb(250, 238, 245)
-    Note over UE1,CHG: Phase 4 - teardown, CDR, and charging
-    UE1->>P: SIP BYE
-    P->>I: Forward BYE
-    I->>S: Route BYE
-    S->>CDR: Store completed dialog CDR
-    S->>P: Forward BYE toward UE2
-    P->>UE2: SIP BYE
-    UE2-->>P: 200 OK
-    P-->>UE1: 200 OK
-    P->>RTP: NG delete, media session closed
-    TEST->>CDR: Read completed CDR
-    TEST->>CHG: POST completed call usage to /v1/charging/events
-    end
+    Note over UE1,CHG: Teardown, CDR persistence, and charging
+    UE1->>PCSCF: SIP BYE
+    PCSCF->>UE2: Forward BYE
+    UE2-->>PCSCF: 200 OK
+    PCSCF-->>UE1: 200 OK
+    SCSCF->>CDR: Persist completed dialog record
+    TEST->>CDR: Read completed CDR and prepare usage
+    TEST->>CHG: POST usage event to /v1/charging/events
+    CHG-->>TEST: Charging result
 ~~~
 
 A successful call exercises both the 5G user plane and IMS signaling. SIP between each UE and the P-CSCF travels over the UE's `ims` PDU session (gNodeB, N3 GTP-U, shared UPF), while SDP negotiation directs media through RTPEngine. The call and usage scripts collect signaling, media, and billing evidence from the active lab rather than from a generated dashboard fixture.
