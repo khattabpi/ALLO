@@ -21,7 +21,7 @@ const visualizer = {
       code: "5GC-SA",
       title: "5G Standalone Core",
       subtitle: "Open5GS 3GPP Rel-16",
-      tag: "12 NFs • N2/N3/N4",
+      tag: "NF status pending • N2/N3/N4",
       category: "network",
       desc: "Isolated Home AMF (:38412) & Visited AMF (:38413), SMF, UPF (GTP-U/PFCP), UDM, UDR, AUSF, PCF, BSF, NRF on Kubernetes."
     },
@@ -66,7 +66,7 @@ const visualizer = {
       code: "AUDIT-REC",
       title: "Reconciliation",
       subtitle: "Financial Audit Engine",
-      tag: "Invariant Check: PASS",
+      tag: "Reconciliation status pending",
       category: "network",
       desc: "Automated verification ensuring sum of account balances strictly equals total credits minus consumed revenue."
     }
@@ -92,9 +92,8 @@ const visualizer = {
 
     let html = "";
     this.pipelineNodes.forEach((node, idx) => {
-      const isVoice = node.category === "voice";
-      const nodeClass = isVoice ? "node-voice" : "node-network";
-      const dotClass = isVoice ? "status-dot-cyan" : "status-dot-green";
+      const nodeClass = node.category === "voice" ? "node-voice" : "node-network";
+      const dotClass = "status-dot-neutral";
 
       html += `
         <div class="pipeline-node ${nodeClass} ${idx === 0 ? 'node-active' : ''}" id="pnode-${node.id}" onclick="visualizer.showNodeDetail('${node.id}')">
@@ -209,10 +208,10 @@ const visualizer = {
         </div>
       </div>
 
-      <!-- Revenue & Observability -->
+      <!-- Billing & Observability -->
       <div class="topo-domain-box" style="border-top: 3px solid var(--teal-500);">
         <div class="topo-domain-title">
-          <span>Revenue Engine & Observability</span>
+          <span>Billing Engine &amp; Observability</span>
         </div>
         <div class="topo-items-list">
           <div class="topo-item">

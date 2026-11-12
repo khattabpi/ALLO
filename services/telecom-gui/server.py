@@ -111,6 +111,16 @@ def http_get_json(url, timeout=2.5):
         return {"error": str(e), "_offline": True}
 
 
+def http_endpoint_ready(url, timeout=1.5):
+    """Check HTTP readiness endpoints that return plain text instead of JSON."""
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Telecom-GUI/1.0"})
+        with urllib.request.urlopen(req, timeout=timeout) as resp:
+            return 200 <= resp.status < 300
+    except Exception:
+        return False
+
+
 def http_post_json(url, payload, timeout=3.5):
     """Helper to POST JSON to internal services."""
     try:
@@ -629,14 +639,14 @@ class TelecomApiHandler(BaseHTTPRequestHandler):
     def handle_api_system_health(self):
         """Direct health verification of all external dependency endpoints."""
         charging_h = http_get_json(f"{ERLANG_CHARGING_URL}/health", timeout=1.5)
-        prom_h = http_get_json(f"{PROMETHEUS_URL}/-/ready", timeout=1.5)
-        am_h = http_get_json(f"{ALERTMANAGER_URL}/-/ready", timeout=1.5)
+        prom_ready = http_endpoint_ready(f"{PROMETHEUS_URL}/-/ready", timeout=1.5)
+        am_ready = http_endpoint_ready(f"{ALERTMANAGER_URL}/-/ready", timeout=1.5)
 
         self.reply_json({
             "gui_server": "UP",
             "erlang_charging": "UP" if not charging_h.get("_offline") else "DOWN",
-            "prometheus": "UP" if not prom_h.get("_offline") else "DOWN",
-            "alertmanager": "UP" if not am_h.get("_offline") else "DOWN"
+            "prometheus": "UP" if prom_ready else "DOWN",
+            "alertmanager": "UP" if am_ready else "DOWN"
         })
 
     # ----------------------------------------------------------------------

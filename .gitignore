@@ -55,3 +55,5 @@ _build/
 erl_crash.dump
 
 external/
+# Local Docker image archives and build artifacts
+artifacts/  

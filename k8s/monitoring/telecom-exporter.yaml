@@ -519,7 +519,6 @@ spec:
         - name: exporter
           image: ims-node:latest
           imagePullPolicy: IfNotPresent
-          imagePullPolicy: IfNotPresent
           command: ["python3", "/app/telecom-exporter.py"]
           env:
             - name: EXPORTER_PORT

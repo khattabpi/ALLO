@@ -16,6 +16,8 @@ const app = {
     transactions: [],
     topology: null
   },
+  detailReturnTab: "overview",
+  adminHealth: null,
 
   init() {
     this.bindEvents();
@@ -33,9 +35,44 @@ const app = {
       });
     });
 
+    document.addEventListener("click", (event) => {
+      const target = event.target.closest(".drilldown-target");
+      if (target && target.dataset.detail && !event.target.closest("button, a, input, select")) {
+        this.openDetail(target.dataset.detail);
+      }
+    });
+    document.addEventListener("keydown", (event) => {
+      const target = event.target.closest(".drilldown-target");
+      if (target && (event.key === "Enter" || event.key === " ")) {
+        event.preventDefault();
+        this.openDetail(target.dataset.detail);
+      }
+    });
+    document.getElementById("detail-back-button")?.addEventListener("click", () => this.switchTab(this.detailReturnTab));
+    document.getElementById("admin-refresh-button")?.addEventListener("click", () => this.loadAdminNoc());
+    document.getElementById("admin-actions")?.addEventListener("click", (event) => {
+      const action = event.target.closest("[data-admin-action]")?.dataset.adminAction;
+      if (action === "refresh") this.refreshAll(true);
+      if (action === "reconcile") this.runReconciliation();
+      if (action === "calls") this.switchTab("calls");
+      if (action === "topology") this.switchTab("topology");
+      if (action === "charging") this.switchTab("charging");
+    });
+
     // Sidebar Collapse / Expand Toggle
     const btnToggleSidebar = document.getElementById("sidebar-toggle-btn");
     if (btnToggleSidebar) {
+      const syncSidebarControl = () => {
+        const mobile = window.innerWidth <= 768;
+        const expanded = mobile
+          ? document.getElementById("app-sidebar")?.classList.contains("open") || false
+          : !document.body.classList.contains("sidebar-collapsed");
+        btnToggleSidebar.setAttribute("aria-expanded", String(expanded));
+        btnToggleSidebar.setAttribute("aria-label", expanded ? "Collapse navigation" : "Expand navigation");
+        btnToggleSidebar.title = expanded ? "Collapse navigation" : "Expand navigation";
+      };
+      syncSidebarControl();
+      window.addEventListener("resize", syncSidebarControl);
       btnToggleSidebar.addEventListener("click", () => {
         if (window.innerWidth <= 768) {
           const sidebar = document.getElementById("app-sidebar");
@@ -43,26 +80,53 @@ const app = {
         } else {
           document.body.classList.toggle("sidebar-collapsed");
         }
+        syncSidebarControl();
       });
     }
 
     // Dark Mode Theme Toggle
     const btnThemeToggle = document.getElementById("theme-toggle-btn");
-    const currentTheme = localStorage.getItem("allo-theme") || (window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light");
+    const savedTheme = localStorage.getItem("allo-theme");
+    const prefersDark = window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches;
+    const currentTheme = savedTheme || (prefersDark ? "dark" : "light");
     if (currentTheme === "dark") {
       document.documentElement.setAttribute("data-theme", "dark");
+    } else {
+      document.documentElement.removeAttribute("data-theme");
     }
+
     if (btnThemeToggle) {
       btnThemeToggle.addEventListener("click", () => {
         const isDark = document.documentElement.getAttribute("data-theme") === "dark";
         const newTheme = isDark ? "light" : "dark";
+
+        // Add temporary transition class for smooth theme switch
+        document.documentElement.classList.add("theme-transitioning");
         if (newTheme === "dark") {
           document.documentElement.setAttribute("data-theme", "dark");
         } else {
           document.documentElement.removeAttribute("data-theme");
         }
         localStorage.setItem("allo-theme", newTheme);
-        this.showToast(`Switched to ${newTheme} mode`, "info");
+
+        setTimeout(() => {
+          document.documentElement.classList.remove("theme-transitioning");
+        }, 350);
+
+        this.showToast(`Switched to ${newTheme === "dark" ? "Dark" : "Light"} mode`, "info");
+      });
+    }
+
+    // Listen for OS theme changes if user hasn't explicitly set a preference
+    if (window.matchMedia) {
+      window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", (e) => {
+        if (!localStorage.getItem("allo-theme")) {
+          if (e.matches) {
+            document.documentElement.setAttribute("data-theme", "dark");
+          } else {
+            document.documentElement.removeAttribute("data-theme");
+          }
+        }
       });
     }
 
@@ -201,6 +265,151 @@ const app = {
     if (tabId === "topology") {
       visualizer.renderTopology();
     }
+    if (tabId === "admin") this.loadAdminNoc();
+    if (window.innerWidth <= 768) {
+      document.getElementById("app-sidebar")?.classList.remove("open");
+      const toggle = document.getElementById("sidebar-toggle-btn");
+      toggle?.setAttribute("aria-expanded", "false");
+      toggle?.setAttribute("aria-label", "Expand navigation");
+      if (toggle) toggle.title = "Expand navigation";
+    }
+  },
+
+  escapeHtml(value) {
+    return String(value ?? "—").replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+  },
+
+  formatNumber(value, digits = 2) {
+    return Number.isFinite(Number(value)) ? Number(value).toLocaleString(undefined, { minimumFractionDigits: digits, maximumFractionDigits: digits }) : "—";
+  },
+
+  openDetail(key) {
+    const content = {
+      "service-chain": { title: "End-to-end service chain", subtitle: "Control plane, IMS signaling, media relay, and prepaid charging path", represents: "The service path that connects a registered UE to voice service and records chargeable usage.", components: "UERANSIM UE and gNodeB; Open5GS AMF/SMF/UPF; Kamailio P-CSCF/I-CSCF/S-CSCF; RTPEngine; Erlang/OTP charging and its ledger.", process: "A UE registers through NGAP/NAS, establishes a PDU session through SMF and UPF, then uses SIP through the IMS CSCFs. SDP negotiation selects RTPEngine for RTP relay. The completed call CDR can be matched to an Erlang transaction by call ID.", data: this.serviceChainRows() },
+      revenue: { title: "Prepaid revenue and balances", subtitle: "Erlang charging state and double-entry ledger", represents: "Consumed, available, and reserved amounts reported by prepaid subscriber accounts, plus the configured reconciliation result.", components: "Erlang/OTP charging service (:8085), account store, tariff rating, and reconciliation API.", process: "The charging service selects a tariff for a rated event, applies the balance mutation and records a transaction. Reconciliation checks account totals against journal invariants.", data: this.revenueRows() },
+      calls: { title: "Recorded IMS calls", subtitle: "Kamailio CDRs with Erlang transaction matches where available", represents: "The call records returned by the Kamailio CDR query, up to the endpoint's current limit, with recorded timestamp, duration, SIP result, call type, and matched charge when found.", components: "Kamailio S-CSCF CDR store, IMS signaling path, and Erlang charging ledger.", process: "The S-CSCF writes a CDR for a call. The API cross-references its call ID against account transactions; unmatched CDRs remain recorded without a fabricated charge.", data: this.callRows() },
+      chart: { title: "Call and matched revenue analysis", subtitle: "Per-call view from current CDR and charging data; no interpolated time series", represents: "Each plotted row is an actual call returned by /api/calls. Duration and matched LAB charge are shown against that CDR's timestamp.", components: "Kamailio CDR database and Erlang transaction ledger; traffic is call count/duration only, because no historical traffic-rate series is exposed by this frontend API.", process: "The server loads up to 50 CDRs and looks up a ledger transaction for each call ID. A call without a matching transaction is labeled uncharged/unmatched in this view.", data: this.callRows() },
+      core: { title: "5G standalone core", subtitle: "Open5GS network function availability from Prometheus", represents: "The count of Open5GS NF status series reporting an up value, alongside the total configured function count.", components: "Open5GS control-plane network functions and Prometheus metric open5gs_5gc_nf_status.", process: "The exporter publishes per-NF status; the overview API queries Prometheus and counts series with value 1. This is a service-health signal and does not prove end-to-end subscriber reachability.", data: this.nfRows() },
+      subscribers: { title: "Registered subscriber inventory", subtitle: "Configured UEs, PLMN placement, PDU addresses, and charging accounts", represents: "The subscriber records returned by the GUI API, including home/serving PLMN and live network namespace counters when available.", components: "UERANSIM UE profiles, Open5GS registration/session state, Linux network namespaces, and Erlang prepaid accounts.", process: "The API joins configured UE identity and slice addressing with network namespace byte counters and charging account balance data. An inactive counter source is shown as unavailable.", data: this.subscriberRows() },
+      "network-functions": { title: "Network functions", subtitle: "Prometheus-reported 5GC status names and configured service endpoints", represents: "The NF names currently returned as online by the Prometheus status query. Endpoint details are defined by the network topology API.", components: "Open5GS core, IMS, RTPEngine, and charging service.", process: "Prometheus NF status series provide current up/down state. Other components are reported by the health and topology APIs with their respective checks.", data: this.nfRows() }
+    }[key];
+    if (!content) return;
+    this.detailReturnTab = this.activeTab === "detail" ? this.detailReturnTab : this.activeTab;
+    document.getElementById("detail-title").textContent = content.title;
+    document.getElementById("detail-subtitle").textContent = content.subtitle;
+    document.getElementById("detail-represents").textContent = content.represents;
+    document.getElementById("detail-components").textContent = content.components;
+    document.getElementById("detail-process").textContent = content.process;
+    document.getElementById("detail-status").textContent = this.detailStatus(key);
+    document.getElementById("detail-summary").innerHTML = this.detailSummary(key).map(([label, value]) => `<article class="card detail-stat-card"><span class="detail-stat-label">${this.escapeHtml(label)}</span><strong class="detail-stat-value">${this.escapeHtml(value)}</strong></article>`).join("");
+    document.getElementById("detail-data-title").textContent = key === "chart" ? "Available call and revenue records" : "Current operational data";
+    document.getElementById("detail-data-content").innerHTML = content.data.html;
+    document.getElementById("detail-data-count").textContent = content.data.count;
+    this.switchTab("detail");
+  },
+
+  detailStatus(key) {
+    const o = this.data.overview || {};
+    if (key === "core" || key === "network-functions") return o.core_5g?.status || "UNKNOWN";
+    if (key === "revenue") return o.revenue?.status || "UNKNOWN";
+    if (key === "calls" || key === "chart") return this.data.calls.length ? `${this.data.calls.length} RECORDS` : "NO RECORDS";
+    return o.status || "UNKNOWN";
+  },
+
+  detailSummary(key) {
+    const overview = this.data.overview || {};
+    const core = overview.core_5g || {};
+    const revenue = overview.revenue || {};
+    const calls = this.data.calls || [];
+    const matchedCdrs = calls.filter(c => c.charging?.transaction_id && c.charging.transaction_id !== "N/A");
+    const matchedTransactions = new Map(matchedCdrs.map(c => [c.charging.transaction_id, Number(c.charging.charged_amount) || 0]));
+    const matchedRevenue = [...matchedTransactions.values()].reduce((sum, amount) => sum + amount, 0);
+    const durations = calls.reduce((sum, c) => sum + (Number(c.duration_seconds) || 0), 0);
+    const subscribers = this.data.subscribers || [];
+    const values = {
+      "service-chain": [["Pipeline stages", String((visualizer.pipelineNodes || []).length)], ["5G core", core.status || "UNKNOWN"], ["IMS", overview.ims?.status || "UNKNOWN"], ["Charging", revenue.status || "UNKNOWN"]],
+      revenue: [["Available", `${this.formatNumber(revenue.total_available)} ${revenue.currency || "LAB"}`], ["Consumed", `${this.formatNumber(revenue.total_consumed)} ${revenue.currency || "LAB"}`], ["Reserved", `${this.formatNumber(revenue.total_reserved)} ${revenue.currency || "LAB"}`], ["Reconciliation", revenue.reconciliation_status || "UNKNOWN"]],
+      calls: [["Available CDRs", String(calls.length)], ["CDRs with charge match", String(matchedCdrs.length)], ["Unique matched transactions", String(matchedTransactions.size)], ["Matched revenue", `${this.formatNumber(matchedRevenue)} LAB`]],
+      chart: [["CDRs in endpoint", String(calls.length)], ["Matched transactions", String(matchedTransactions.size)], ["Matched revenue", `${this.formatNumber(matchedRevenue)} LAB`], ["Total call duration", `${this.formatNumber(durations, 0)} seconds`]],
+      core: [["Core status", core.status || "UNKNOWN"], ["Online NFs", `${core.active_nfs_count ?? "—"}/${core.total_nfs_count ?? "—"}`], ["IMS", overview.ims?.status || "UNKNOWN"], ["QoE MOS", overview.qoe_kpis?.mos_score ?? "—"]],
+      subscribers: [["Profiles", String(subscribers.length)], ["Home PLMN", String(subscribers.filter(s => s.hplmn === s.serving_plmn).length)], ["Roaming", String(subscribers.filter(s => s.roaming).length)], ["Serving networks", "HPLMN / VPLMN"]],
+      "network-functions": [["Core status", core.status || "UNKNOWN"], ["Online NF series", String((core.nfs_online || []).length)], ["Configured total", core.total_nfs_count ?? "—"], ["Status source", "Prometheus"]]
+    };
+    return values[key] || [];
+  },
+
+  serviceChainRows() {
+    const nodes = visualizer.pipelineNodes || [];
+    return { count: `${nodes.length} stages`, html: `<ol class="detail-chain-list">${nodes.map(n => `<li><strong>${this.escapeHtml(n.title)}</strong><span>${this.escapeHtml(n.desc)}</span></li>`).join("")}</ol>` };
+  },
+
+  callRows(limit = Infinity) {
+    const calls = this.data.calls.slice(0, limit);
+    if (!calls.length) return { count: "0 records", html: '<p class="chart-empty-state">No CDR records are currently available from the calls API.</p>' };
+    const rows = calls.map(c => `<tr><td>${this.escapeHtml(c.start_time)}</td><td>${this.escapeHtml(c.call_id)}</td><td>${this.escapeHtml(c.caller)} → ${this.escapeHtml(c.callee)}</td><td>${this.escapeHtml(c.duration_seconds)} s</td><td>${this.escapeHtml(c.sip_code)} ${this.escapeHtml(c.sip_reason)}</td><td>${this.escapeHtml(c.call_type)}</td><td>${c.charging?.transaction_id && c.charging.transaction_id !== "N/A" ? `${this.formatNumber(c.charging.charged_amount)} ${this.escapeHtml(c.charging.currency)}` : "Unmatched"}</td></tr>`).join("");
+    const table = `<div class="table-responsive"><table class="data-table"><thead><tr><th>Timestamp</th><th>Call ID</th><th>Route</th><th>Duration</th><th>SIP result</th><th>Call type</th><th>Matched charge</th></tr></thead><tbody>${rows}</tbody></table></div>`;
+    if (limit !== Infinity) return { count: `${calls.length} of ${this.data.calls.length} records`, html: table };
+    return { count: `${calls.length} records`, html: table };
+  },
+
+  revenueRows() {
+    const r = this.data.overview?.revenue || {};
+    const rows = [["Charging service", r.status], ["Total available", `${this.formatNumber(r.total_available)} ${r.currency || "LAB"}`], ["Total consumed", `${this.formatNumber(r.total_consumed)} ${r.currency || "LAB"}`], ["Reserved", `${this.formatNumber(r.total_reserved)} ${r.currency || "LAB"}`], ["Active accounts", r.active_accounts], ["Reconciliation", r.reconciliation_status], ["Anomalies", r.anomalies_count]];
+    const tx = this.data.transactions || [];
+    const txHtml = tx.length ? `<h4>Transactions (${tx.length})</h4><div class="table-responsive"><table class="data-table"><thead><tr><th>Created</th><th>Transaction</th><th>Account</th><th>Type</th><th>Amount</th><th>Reference</th></tr></thead><tbody>${tx.map(t => `<tr><td>${this.escapeHtml(t.created_at)}</td><td>${this.escapeHtml(t.transaction_id || t.id)}</td><td>${this.escapeHtml(t.account_name || t.account_id)}</td><td>${this.escapeHtml(t.type)}</td><td>${this.escapeHtml(t.amount)} LAB</td><td>${this.escapeHtml(t.reference_id)}</td></tr>`).join("")}</tbody></table></div>` : '<p class="chart-empty-state">No transaction rows returned.</p>';
+    return { count: `${tx.length} transactions`, html: `<dl class="detail-data-list">${rows.map(([k,v]) => `<div><dt>${this.escapeHtml(k)}</dt><dd>${this.escapeHtml(v)}</dd></div>`).join("")}</dl>${txHtml}` };
+  },
+
+  nfRows() {
+    const names = this.data.overview?.core_5g?.nfs_online || [];
+    if (!names.length) return { count: "No online NF series", html: '<p class="chart-empty-state">No online network function series were returned.</p>' };
+    return { count: `${names.length} online series`, html: `<ul class="detail-simple-list">${names.map(n => `<li>${this.escapeHtml(n)} <span class="badge badge-success">UP</span></li>`).join("")}</ul>` };
+  },
+
+  subscriberRows() {
+    const subs = this.data.subscribers || [];
+    if (!subs.length) return { count: "0 subscribers", html: '<p class="chart-empty-state">Subscriber data is unavailable.</p>' };
+    return { count: `${subs.length} subscribers`, html: `<div class="table-responsive"><table class="data-table"><thead><tr><th>UE</th><th>IMSI</th><th>Home / serving PLMN</th><th>Internet IP</th><th>IMS IP</th><th>Balance</th><th>Internet RX / TX</th><th>IMS RX / TX</th></tr></thead><tbody>${subs.map(s => `<tr><td>${this.escapeHtml(s.name)}</td><td>${this.escapeHtml(s.imsi)}</td><td>${this.escapeHtml(s.hplmn)} / ${this.escapeHtml(s.serving_plmn)}</td><td>${this.escapeHtml(s.internet?.ip)}</td><td>${this.escapeHtml(s.ims?.ip)}</td><td>${this.formatNumber(s.balance?.available)} ${this.escapeHtml(s.balance?.currency || "LAB")}</td><td>${s.internet?.status === "UP" ? `${this.escapeHtml(s.internet.rx_bytes)} / ${this.escapeHtml(s.internet.tx_bytes)} bytes` : "Unavailable"}</td><td>${s.ims?.status === "UP" ? `${this.escapeHtml(s.ims.rx_bytes)} / ${this.escapeHtml(s.ims.tx_bytes)} bytes` : "Unavailable"}</td></tr>`).join("")}</tbody></table></div>` };
+  },
+
+  renderOverviewChart() {
+    const el = document.getElementById("overview-chart-wrapper");
+    if (!el) return;
+    const calls = this.data.calls.slice(0, 8);
+    if (!calls.length) {
+      el.innerHTML = '<p class="chart-empty-state">No call records available. The chart will populate when the CDR endpoint returns data.</p>';
+      return;
+    }
+    const maxDuration = Math.max(1, ...calls.map(c => Number(c.duration_seconds) || 0));
+    el.innerHTML = `<div class="chart-legend"><div class="legend-item"><span class="legend-dot-cyan"></span><span>Recorded call duration</span></div><div class="legend-item"><span class="legend-dot-blue"></span><span>Matched charge (LAB)</span></div><span class="chart-source-note">Latest ${calls.length} of ${this.data.calls.length} available CDRs</span></div><div class="call-chart-list">${calls.map(c => {
+      const duration = Number(c.duration_seconds) || 0;
+      const charge = Number(c.charging?.charged_amount) || 0;
+      const width = Math.max(2, duration / maxDuration * 100);
+      const time = c.start_time ? new Date(c.start_time).toLocaleString() : "Timestamp unavailable";
+      return `<div class="call-chart-row"><div class="call-chart-meta"><span>${this.escapeHtml(time)}</span><strong>${this.escapeHtml(c.caller)} → ${this.escapeHtml(c.callee)}</strong></div><div class="call-chart-measures"><div class="call-duration-track" title="${this.escapeHtml(duration)} seconds"><span style="width:${width}%"></span></div><span>${this.escapeHtml(duration)} s</span><b>${c.charging?.transaction_id && c.charging.transaction_id !== "N/A" ? `${this.formatNumber(charge)} LAB` : "Unmatched"}</b></div></div>`;
+    }).join("")}</div><button class="btn btn-sm btn-secondary chart-detail-button" type="button">View all ${this.data.calls.length} records and analysis</button>`;
+    el.querySelector(".chart-detail-button")?.addEventListener("click", e => { e.stopPropagation(); this.openDetail("chart"); });
+  },
+
+  async loadAdminNoc() {
+    const grid = document.getElementById("admin-health-grid");
+    if (!grid) return;
+    grid.innerHTML = '<p class="chart-empty-state">Checking connected systems…</p>';
+    try {
+      const [healthRes, topologyRes] = await Promise.all([fetch("/api/system/health"), fetch("/api/network/topology")]);
+      this.adminHealth = healthRes.ok ? await healthRes.json() : null;
+      this.data.topology = topologyRes.ok ? await topologyRes.json() : null;
+      if (!this.adminHealth) throw new Error("System health API did not return a successful response");
+      const items = Object.entries(this.adminHealth);
+      grid.innerHTML = items.map(([name, state]) => `<article class="card admin-health-card"><span>${this.escapeHtml(name.replaceAll("_", " "))}</span><strong class="${state === "UP" ? "status-up" : "status-down"}">${this.escapeHtml(state)}</strong></article>`).join("");
+      const ops = document.getElementById("admin-actions");
+      ops.innerHTML = `<button class="btn btn-secondary" data-admin-action="refresh">Refresh dashboard data</button><button class="btn btn-primary" data-admin-action="reconcile">Run financial reconciliation</button><button class="btn btn-secondary" data-admin-action="charging">Open charging ledger</button><button class="btn btn-secondary" data-admin-action="calls">Open IMS CDRs</button><button class="btn btn-secondary" data-admin-action="topology">Open network topology</button>`;
+      const obs = this.data.topology?.observability || {};
+      const endpoints = Object.entries(obs);
+      document.getElementById("admin-endpoints").innerHTML = endpoints.length ? endpoints.map(([name, url]) => `<a href="${this.escapeHtml(url)}" target="_blank" rel="noopener noreferrer"><span>${this.escapeHtml(name)}</span><code>${this.escapeHtml(url)}</code></a>`).join("") : '<p class="chart-empty-state">Observability endpoints were not returned by the topology API.</p>';
+    } catch (error) {
+      grid.innerHTML = `<p class="chart-empty-state">System health is unavailable: ${this.escapeHtml(error.message)}</p>`;
+    }
   },
 
   startAutoRefresh() {
@@ -252,6 +461,10 @@ const app = {
       const data = await res.json();
       this.data.subscribers = data.subscribers || [];
       this.renderSubscribers(this.data.subscribers);
+      const simCount = document.getElementById("kpi-ues-count");
+      if (simCount) simCount.textContent = `${this.data.subscribers.length} Profiles`;
+      const ueTicker = document.getElementById("ticker-ues");
+      if (ueTicker) ueTicker.textContent = `${this.data.subscribers.length} profiles`;
     } catch (e) {
       console.error("fetchSubscribers error:", e);
     }
@@ -264,6 +477,9 @@ const app = {
       const data = await res.json();
       this.data.calls = data.calls || [];
       this.renderCalls(this.data.calls);
+      this.renderOverviewChart();
+      const callCount = document.getElementById("kpi-active-vonr-calls");
+      if (callCount) callCount.textContent = String(this.data.calls.length);
     } catch (e) {
       console.error("fetchCalls error:", e);
     }
@@ -305,97 +521,80 @@ const app = {
   renderOverview(data) {
     if (!data) return;
 
+    const setPipelineStatus = (nodeId, status, tag) => {
+      const node = document.getElementById(`pnode-${nodeId}`);
+      if (!node) return;
+      const dot = node.querySelector(".node-code span");
+      const normalized = String(status || "UNKNOWN").toUpperCase();
+      dot?.classList.remove("status-dot-neutral", "status-dot-green", "status-dot-cyan", "status-dot-red", "status-dot-amber");
+      const tone = ["UP", "PASS", "OPERATIONAL"].includes(normalized) ? "green" : ["DOWN", "FAIL"].includes(normalized) ? "red" : normalized === "DEGRADED" ? "amber" : "neutral";
+      dot?.classList.add(`status-dot-${tone}`);
+      dot?.setAttribute("title", `Current reported status: ${normalized}`);
+      const label = node.querySelector(".node-tag");
+      if (label && tag) label.textContent = tag;
+    };
+    setPipelineStatus("5gc", data.core_5g?.status, `${data.core_5g?.active_nfs_count ?? "—"}/${data.core_5g?.total_nfs_count ?? "—"} NFs • N2/N3/N4`);
+    setPipelineStatus("ims", data.ims?.status, "P-CSCF / I-CSCF / S-CSCF");
+    setPipelineStatus("charging", data.revenue?.status, "Erlang charging service");
+    setPipelineStatus("reconcile", data.revenue?.reconciliation_status, `Invariant check: ${data.revenue?.reconciliation_status || "UNKNOWN"}`);
+
     // Ticker items
     const tickerNfs = document.getElementById("ticker-nfs");
-    if (tickerNfs) tickerNfs.textContent = `${data.core_5g?.active_nfs_count || 12}/${data.core_5g?.total_nfs_count || 12} Online`;
+    if (tickerNfs) tickerNfs.textContent = `${data.core_5g?.active_nfs_count ?? "—"}/${data.core_5g?.total_nfs_count ?? "—"} Online`;
+    const healthValues = { core: data.core_5g?.status, ims: data.ims?.status, charging: data.revenue?.status, audit: data.revenue?.reconciliation_status };
+    document.querySelectorAll(".status-row[data-health-key]").forEach(row => {
+      const state = String(healthValues[row.dataset.healthKey] || "UNKNOWN").toLowerCase();
+      row.dataset.healthState = ["up", "pass", "operational"].includes(state) ? "up" : ["down", "fail"].includes(state) ? "down" : state === "degraded" ? "degraded" : "unknown";
+    });
+    const header5gc = document.getElementById("header-5gc-status");
+    if (header5gc) header5gc.textContent = `5GC: ${data.core_5g?.status || "Unknown"}`;
+    const headerIms = document.getElementById("header-ims-status");
+    if (headerIms) headerIms.textContent = `IMS: ${data.ims?.status || "Unknown"}`;
+    const tickerIms = document.getElementById("ticker-ims");
+    if (tickerIms) tickerIms.textContent = data.ims?.status || "Unknown";
 
     const tickerCharging = document.getElementById("ticker-charging");
-    if (tickerCharging) tickerCharging.textContent = `Erlang :8085 (${data.revenue?.status || 'UP'})`;
+    if (tickerCharging) tickerCharging.textContent = `Erlang :8085 (${data.revenue?.status || "UNKNOWN"})`;
 
     const tickerAudit = document.getElementById("ticker-audit");
-    if (tickerAudit) tickerAudit.textContent = `AUDIT: ${data.revenue?.reconciliation_status || 'PASS'}`;
+    if (tickerAudit) tickerAudit.textContent = `AUDIT: ${data.revenue?.reconciliation_status || "UNKNOWN"}`;
 
     const tickerMos = document.getElementById("ticker-mos");
-    if (tickerMos) tickerMos.textContent = `${data.qoe_kpis?.mos_score || '4.41'} (${data.qoe_kpis?.mos_rating || 'Excellent'})`;
+    if (tickerMos) tickerMos.textContent = `${data.qoe_kpis?.mos_score ?? "—"} (${data.qoe_kpis?.mos_rating || "Unavailable"})`;
 
     // KPI Cards
     const kpi5g = document.getElementById("kpi-5gc-status");
-    if (kpi5g) kpi5g.textContent = `${data.core_5g?.active_nfs_count || 12}/${data.core_5g?.total_nfs_count || 12} NFs`;
+    if (kpi5g) kpi5g.textContent = `${data.core_5g?.active_nfs_count ?? "—"}/${data.core_5g?.total_nfs_count ?? "—"} NFs`;
 
     const kpiRevConsumed = document.getElementById("kpi-revenue-consumed");
-    if (kpiRevConsumed) kpiRevConsumed.textContent = `${(data.revenue?.total_consumed || 0).toFixed(2)} LAB`;
+    if (kpiRevConsumed) kpiRevConsumed.textContent = `${this.formatNumber(data.revenue?.total_consumed)} LAB`;
 
     const kpiRevAvail = document.getElementById("kpi-revenue-avail");
-    if (kpiRevAvail) kpiRevAvail.textContent = `Avail: ${(data.revenue?.total_available || 0).toFixed(2)} LAB • ${data.revenue?.active_accounts || 4} Accounts`;
+    if (kpiRevAvail) kpiRevAvail.textContent = `Avail: ${this.formatNumber(data.revenue?.total_available)} LAB • ${data.revenue?.active_accounts ?? "—"} Accounts`;
 
     const kpiMos = document.getElementById("kpi-qoe-mos");
-    if (kpiMos) kpiMos.textContent = `${data.qoe_kpis?.mos_score || '4.41'} MOS`;
+    if (kpiMos) kpiMos.textContent = `${data.qoe_kpis?.mos_score ?? "—"} MOS`;
 
     const kpiQoeStats = document.getElementById("kpi-qoe-stats");
-    if (kpiQoeStats) kpiQoeStats.textContent = `CSSR: ${data.qoe_kpis?.cssr_percent || 100}% • Jitter: ${data.qoe_kpis?.jitter_ms || 0.25}ms`;
+    if (kpiQoeStats) kpiQoeStats.textContent = `CSSR: ${data.qoe_kpis?.cssr_percent ?? "—"}% • Jitter: ${data.qoe_kpis?.jitter_ms ?? "—"} ms`;
 
-    // Overview NF table
+    // Only render NF names and up state actually returned by the overview API.
     const nfsTbody = document.getElementById("overview-nfs-tbody");
     if (nfsTbody) {
-      nfsTbody.innerHTML = `
-        <tr>
-          <td><span class="badge badge-network">5GC Home</span></td>
-          <td><strong>Home AMF + SMF</strong></td>
-          <td><code>SCTP :38412 / HTTP</code></td>
-          <td><span class="badge badge-success">ACTIVE</span></td>
-        </tr>
-        <tr>
-          <td><span class="badge badge-warning">5GC Visited</span></td>
-          <td><strong>Visited AMF (V-AMF) + V-SMF</strong></td>
-          <td><code>SCTP :38413 / HTTP</code></td>
-          <td><span class="badge badge-success">ACTIVE (BH Telecom)</span></td>
-        </tr>
-        <tr>
-          <td><span class="badge badge-network">User Plane</span></td>
-          <td><strong>UPF (PFCP & GTP-U)</strong></td>
-          <td><code>N4 :8805 / N3 :2152</code></td>
-          <td><span class="badge badge-success">ACTIVE (10.45.0.1)</span></td>
-        </tr>
-        <tr>
-          <td><span class="badge badge-voice">IMS Voice</span></td>
-          <td><strong>Kamailio P-CSCF / S-CSCF</strong></td>
-          <td><code>SIP :5060 (UDP/TCP)</code></td>
-          <td><span class="badge badge-success">LISTENING (10.46.0.1)</span></td>
-        </tr>
-        <tr>
-          <td><span class="badge badge-voice">Media Proxy</span></td>
-          <td><strong>RTPEngine</strong></td>
-          <td><code>NG :22222 / RTP 20000-20100</code></td>
-          <td><span class="badge badge-success">RELAYING (G.711u)</span></td>
-        </tr>
-        <tr>
-          <td><span class="badge badge-voice">Revenue Engine</span></td>
-          <td><strong>Erlang/OTP Telecom Charging</strong></td>
-          <td><code>Cowboy REST :8085</code></td>
-          <td><span class="badge badge-success">RUNNING (OTP 25)</span></td>
-        </tr>
-      `;
+      const names = data.core_5g?.nfs_online || [];
+      nfsTbody.innerHTML = names.length ? names.map(name => `
+        <tr><td><span class="badge badge-network">5GC</span></td><td><strong>${this.escapeHtml(name)}</strong></td><td><code>Prometheus: open5gs_5gc_nf_status</code></td><td><span class="badge badge-success">UP</span></td></tr>
+      `).join("") : `<tr><td colspan="4">No online NF series returned.</td></tr>`;
+      const nfBadge = document.getElementById("nf-badge");
+      if (nfBadge) {
+        nfBadge.textContent = data.core_5g?.status || "UNKNOWN";
+        nfBadge.className = `badge ${data.core_5g?.status === "UP" ? "badge-success" : "badge-warning"}`;
+      }
+      const pagination = document.getElementById("overview-nf-pagination-label");
+      if (pagination) pagination.textContent = `${names.length} online NF series from Prometheus`;
     }
 
-    // Overview Recent Calls
-    const recentCallsEl = document.getElementById("overview-recent-calls");
-    if (recentCallsEl && data.recent_calls) {
-      if (data.recent_calls.length === 0) {
-        recentCallsEl.innerHTML = `<p style="color: var(--text-muted); font-size: 0.85rem;">No recent calls recorded. Click 'Trigger IMS Call' to execute a test call.</p>`;
-      } else {
-        recentCallsEl.innerHTML = data.recent_calls.map(c => `
-          <div style="display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border-subtle);">
-            <div>
-              <div style="font-weight: 600; font-size: 0.85rem;"><span class="text-blue">${c.caller}</span> ➔ <span class="text-red">${c.callee}</span></div>
-              <div style="font-size: 0.72rem; color: var(--text-muted);">${c.start_time || 'Recent'} • Duration: ${c.duration || 1}s • SIP 200 OK</div>
-            </div>
-            <div>
-              <span class="badge badge-voice">CHARGED</span>
-            </div>
-          </div>
-        `).join("");
-      }
-    }
+    this.renderOverviewChart();
   },
 
   renderSubscribers(subscribers) {
@@ -519,9 +718,9 @@ const app = {
         <td><strong class="text-red">${c.callee}</strong></td>
         <td>${c.duration_seconds}s</td>
         <td><span class="badge badge-success">${c.sip_code} ${c.sip_reason}</span></td>
-        <td><code>${c.rtp_packets} pkts (0% loss)</code></td>
-        <td><strong class="text-red">${c.charging?.charged_amount ? c.charging.charged_amount.toFixed(4) + ' LAB' : '0.2500 LAB'}</strong></td>
-        <td><code>${c.charging?.transaction_id || 'tx-call-xx'}</code></td>
+        <td><code>${this.escapeHtml(c.call_type || "—")}</code></td>
+        <td><strong class="text-red">${c.charging?.status === "CHARGED" && c.charging.transaction_id && c.charging.transaction_id !== "N/A" ? `${this.formatNumber(c.charging.charged_amount, 4)} ${this.escapeHtml(c.charging.currency || "LAB")}` : "Unmatched"}</strong></td>
+        <td><code>${c.charging?.status === "CHARGED" && c.charging.transaction_id && c.charging.transaction_id !== "N/A" ? this.escapeHtml(c.charging.transaction_id) : "—"}</code></td>
         <td style="font-size: 0.75rem; color: var(--text-muted);">${c.start_time || 'N/A'}</td>
       </tr>
     `).join("");
@@ -529,7 +728,7 @@ const app = {
     const latestCdrEl = document.getElementById("latest-cdr-json");
     if (latestCdrEl && calls.length > 0) {
       const latest = calls[0];
-      latestCdrEl.innerHTML = `{\n  <span class="json-key">"cdr_id"</span>: <span class="json-num">${latest.id}</span>,\n  <span class="json-key">"caller"</span>: <span class="json-str">"${latest.caller}"</span>,\n  <span class="json-key">"callee"</span>: <span class="json-str">"${latest.callee}"</span>,\n  <span class="json-key">"service"</span>: <span class="json-str">"VoNR / IMS"</span>,\n  <span class="json-key">"duration_sec"</span>: <span class="json-num">${latest.duration_seconds || 15}</span>,\n  <span class="json-key">"rated_charge"</span>: <span class="json-num">${(latest.charging?.charged_amount || 0.3125).toFixed(4)}</span>,\n  <span class="json-key">"currency"</span>: <span class="json-str">"LAB"</span>,\n  <span class="json-key">"status"</span>: <span class="json-str">"SIP ${latest.sip_code} ${latest.sip_reason} (0% RTP Loss)"</span>\n}`;
+      latestCdrEl.innerHTML = `{\n  <span class="json-key">"cdr_id"</span>: <span class="json-num">${latest.id}</span>,\n  <span class="json-key">"caller"</span>: <span class="json-str">"${latest.caller}"</span>,\n  <span class="json-key">"callee"</span>: <span class="json-str">"${latest.callee}"</span>,\n  <span class="json-key">"service"</span>: <span class="json-str">"VoNR / IMS"</span>,\n  <span class="json-key">"duration_sec"</span>: <span class="json-num">${latest.duration_seconds ?? "null"}</span>,\n  <span class="json-key">"rated_charge"</span>: <span class="json-num">${latest.charging?.status === "CHARGED" && latest.charging.transaction_id && latest.charging.transaction_id !== "N/A" ? this.formatNumber(latest.charging.charged_amount, 4) : "null"}</span>,\n  <span class="json-key">"currency"</span>: <span class="json-str">"LAB"</span>,\n  <span class="json-key">"status"</span>: <span class="json-str">"SIP ${latest.sip_code} ${latest.sip_reason}"</span>\n}`;
     }
   },
 
@@ -757,15 +956,14 @@ const app = {
       const secs = String(elapsedSec % 60).padStart(2, '0');
       if (timerDisplay) timerDisplay.textContent = `${hrs}:${mins}:${secs}`;
 
-      const estPkts = elapsedSec * 50;
-      if (pktsDisplay) pktsDisplay.textContent = `~${estPkts} pkts sent (0% loss)`;
+      if (pktsDisplay) pktsDisplay.textContent = "RTP packet telemetry unavailable";
 
       try {
         const res = await fetch("/api/actions/call-status");
         if (res.ok) {
           const st = await res.json();
-          if (st && st.active && st.packets_sent) {
-            if (pktsDisplay) pktsDisplay.textContent = `${st.packets_sent} pkts sent (0% loss)`;
+          if (st && st.active && Number.isFinite(Number(st.packets_sent))) {
+            if (pktsDisplay) pktsDisplay.textContent = `${st.packets_sent} RTP packets sent`;
           }
         }
       } catch (e) {}
@@ -1022,7 +1220,7 @@ const app = {
       const fields = [c.caller, c.callee, String(c.id), c.status, c.type].filter(Boolean);
       if (fields.some(f => f.toLowerCase().includes(q))) {
         results.push({
-          category: "IMS Calls & CDRs",
+          category: "IMS & Traffic",
           tab: "calls",
           icon: "📞",
           title: `CDR #${c.id}: ${c.caller} → ${c.callee}`,

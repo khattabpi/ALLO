@@ -18,16 +18,16 @@
   <header class="top-header-bar">
     <div class="header-brand-left">
       <!-- Sidebar Collapse / Expand Toggle Button -->
-      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Toggle Navigation Sidebar" aria-label="Toggle Navigation Sidebar">
-        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round">
-          <line x1="3" y1="12" x2="21" y2="12"></line>
-          <line x1="3" y1="6" x2="21" y2="6"></line>
-          <line x1="3" y1="18" x2="21" y2="18"></line>
+      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Collapse navigation" aria-label="Collapse navigation" aria-expanded="true" aria-controls="app-sidebar">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="3" y="4" width="18" height="16" rx="3"></rect>
+          <path d="M9 4v16"></path>
+          <path class="sidebar-toggle-chevron" d="m14 9 3 3-3 3"></path>
         </svg>
       </button>
 
       <!-- Official ALLO 5G Logo & Brand Badge -->
-      <div class="brand-logo-container" onclick="app.switchTab('overview')" title="ALLO 5G Control Center">
+      <div class="brand-logo-container" role="button" tabindex="0" onclick="app.switchTab('overview')" title="ALLO 5G Control Center">
         <img src="images/allo-5g-logo.jpg" alt="ALLO 5G" class="allo-brand-logo-img">
         <div class="brand-text-block">
           <div class="brand-title-row">
@@ -54,8 +54,20 @@
 
     <!-- Right Status Pills -->
     <div class="header-tools-right">
-      <span class="header-status-pill"><span class="status-dot-green"></span> 5GC: Operational</span>
-      <span class="header-status-pill"><span class="status-dot-cyan"></span> VoNR: Active</span>
+      <span class="header-status-pill header-status-pill-5gc" title="5G Core status from telemetry">
+        <span class="status-beacon-wrap">
+          <span class="status-ping-ring ping-green"></span>
+          <span class="status-dot-green"></span>
+        </span>
+        <span class="status-pill-label" id="header-5gc-status">5GC: checking</span>
+      </span>
+      <span class="header-status-pill header-status-pill-vonr" title="IMS voice status from overview API">
+        <span class="status-beacon-wrap">
+          <span class="status-ping-ring ping-cyan"></span>
+          <span class="status-dot-cyan"></span>
+        </span>
+        <span class="status-pill-label" id="header-ims-status">IMS: checking</span>
+      </span>
       <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle dark mode">
         <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
           <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
@@ -80,24 +92,28 @@
     <nav class="sidebar-nav">
       <div class="nav-tabs">
         <button class="nav-tab active" data-tab="overview" title="Overview Dashboard">
-          <img src="icons/activity.svg" class="nav-icon" alt="">
+          <img src="icons/home.svg" class="nav-icon" alt="">
           <span class="nav-tab-label">Overview</span>
         </button>
-        <button class="nav-tab" data-tab="subscribers" title="Subscribers &amp; Slices">
+        <button class="nav-tab" data-tab="subscribers" title="Subscribers">
           <img src="icons/users.svg" class="nav-icon" alt="">
-          <span class="nav-tab-label">Subscribers &amp; Slices</span>
+          <span class="nav-tab-label">Subscribers</span>
         </button>
-        <button class="nav-tab" data-tab="calls" title="IMS Calls &amp; Media">
+        <button class="nav-tab" data-tab="calls" title="IMS &amp; Traffic">
           <img src="icons/phone.svg" class="nav-icon" alt="">
-          <span class="nav-tab-label">IMS Calls &amp; Media</span>
+          <span class="nav-tab-label">IMS &amp; Traffic</span>
         </button>
-        <button class="nav-tab" data-tab="charging" title="Revenue &amp; Charging">
+        <button class="nav-tab" data-tab="charging" title="Billing &amp; Charging">
           <img src="icons/currency-dollar.svg" class="nav-icon" alt="">
-          <span class="nav-tab-label">Revenue &amp; Charging</span>
+          <span class="nav-tab-label">Billing &amp; Charging</span>
         </button>
         <button class="nav-tab" data-tab="topology" title="Network Topology">
           <img src="icons/globe.svg" class="nav-icon" alt="">
           <span class="nav-tab-label">Network Topology</span>
+        </button>
+        <button class="nav-tab" data-tab="admin" title="Admin NOC">
+          <img src="icons/gear.svg" class="nav-icon" alt="">
+          <span class="nav-tab-label">Admin NOC</span>
         </button>
       </div>
     </nav>
@@ -106,35 +122,35 @@
     <div class="sidebar-section">
       <div class="sidebar-section-title">System Status</div>
       <div class="sidebar-status-list">
-        <div class="status-row">
+        <div class="status-row" data-health-key="core">
           <span class="s-dot"></span>
           <span class="s-label">5GC NFs</span>
-          <span class="s-value" id="ticker-nfs">12/12 Online</span>
+          <span class="s-value" id="ticker-nfs">—/— Online</span>
         </div>
         <div class="status-row">
           <span class="s-dot"></span>
-          <span class="s-label">Active UEs</span>
-          <span class="s-value" id="ticker-ues">3/3 (1 Roaming)</span>
+          <span class="s-label">Subscriber Profiles</span>
+          <span class="s-value" id="ticker-ues">— profiles</span>
         </div>
-        <div class="status-row">
+        <div class="status-row" data-health-key="ims">
           <span class="s-dot"></span>
           <span class="s-label">IMS Voice</span>
-          <span class="s-value" id="ticker-ims">P/I/S-CSCF UP</span>
+          <span class="s-value" id="ticker-ims">Unknown</span>
         </div>
-        <div class="status-row">
+        <div class="status-row" data-health-key="charging">
           <span class="s-dot"></span>
           <span class="s-label">Charging</span>
-          <span class="s-value" id="ticker-charging">Port :8085 Active</span>
+          <span class="s-value" id="ticker-charging">Erlang :8085 (Unknown)</span>
         </div>
-        <div class="status-row">
+        <div class="status-row" data-health-key="audit">
           <span class="s-dot"></span>
           <span class="s-label">Audit</span>
-          <span class="s-value" id="ticker-audit">PASS</span>
+          <span class="s-value" id="ticker-audit">AUDIT: Unknown</span>
         </div>
         <div class="status-row">
           <span class="s-dot"></span>
           <span class="s-label">QoE MOS</span>
-          <span class="s-value" id="ticker-mos">4.41 (Excellent)</span>
+          <span class="s-value" id="ticker-mos">— (Unavailable)</span>
         </div>
       </div>
     </div>
@@ -167,7 +183,7 @@
       <section id="view-overview" class="view-panel active">
 
         <!-- End-to-End Service Chain Architecture (Focused Top Hero) -->
-        <div class="hero-service-chain-card">
+        <div class="hero-service-chain-card drilldown-target" data-detail="service-chain" role="button" tabindex="0" aria-label="Open service chain technical details">
           <div class="service-chain-header">
             <div>
               <h3>End-to-End Service Chain Architecture</h3>
@@ -182,110 +198,55 @@
         <!-- 4-Card Core Metric Strip (Focused KPIs) -->
         <div class="kpi-4-grid">
           <!-- Red Card 1: Consumed Revenue -->
-          <div class="kpi-card-metric card-red">
+          <div class="kpi-card-metric card-red drilldown-target" data-detail="revenue" role="button" tabindex="0">
             <div class="kpi-metric-title">Total Consumed Revenue (VoNR+Data)</div>
-            <div class="kpi-metric-val" id="kpi-revenue-consumed">74,891.12 LAB</div>
-            <div class="kpi-metric-sub" id="kpi-revenue-avail">Avail: 105.02 LAB • 4 Accounts</div>
+            <div class="kpi-metric-val" id="kpi-revenue-consumed">—</div>
+            <div class="kpi-metric-sub" id="kpi-revenue-avail">Awaiting charging data</div>
           </div>
 
           <!-- Red Card 2: Active VoNR Calls -->
-          <div class="kpi-card-metric card-red">
-            <div class="kpi-metric-title">Active VoNR Calls</div>
-            <div class="kpi-metric-val" id="kpi-active-vonr-calls">219</div>
-            <div class="kpi-metric-sub">Bi-directional G.711u media streams</div>
+          <div class="kpi-card-metric card-red drilldown-target" data-detail="calls" role="button" tabindex="0">
+            <div class="kpi-metric-title">Recorded IMS Calls</div>
+            <div class="kpi-metric-val" id="kpi-active-vonr-calls">—</div>
+            <div class="kpi-metric-sub">Kamailio CDRs currently available</div>
           </div>
 
           <!-- Blue Card 1: 5G SA Core Status -->
-          <div class="kpi-card-metric card-blue">
+          <div class="kpi-card-metric card-blue drilldown-target" data-detail="core" role="button" tabindex="0">
             <div class="kpi-metric-title">5G SA Core Status</div>
-            <div class="kpi-metric-val" id="kpi-5gc-status">12/12 NFs Active</div>
+            <div class="kpi-metric-val" id="kpi-5gc-status">—/— NFs</div>
             <div class="kpi-metric-sub" id="kpi-5gc-sub">Home (602/03) &amp; Visited (218/90)</div>
           </div>
 
-          <!-- Blue Card 2: Registered SIMs -->
-          <div class="kpi-card-metric card-blue">
-            <div class="kpi-metric-title">Registered SIMs</div>
-            <div class="kpi-metric-val" id="kpi-ues-count">3 Active UEs</div>
-            <div class="kpi-metric-sub">2 Domestic + 1 In-Roaming (LBO)</div>
+          <!-- Blue Card 2: Subscriber Profiles -->
+          <div class="kpi-card-metric card-blue drilldown-target" data-detail="subscribers" role="button" tabindex="0">
+            <div class="kpi-metric-title">Subscriber Profiles</div>
+            <div class="kpi-metric-val" id="kpi-ues-count">— Profiles</div>
+            <div class="kpi-metric-sub">Records returned by subscriber API</div>
           </div>
         </div>
 
         <!-- Primary Operational Grid: Call Traffic vs Revenue & Network Functions -->
         <div class="bottom-2col-grid">
           <!-- Left: Call Traffic vs Revenue (High Focus Dual-Line Chart) -->
-          <div class="card">
+          <div class="card drilldown-target" data-detail="chart" role="button" tabindex="0" aria-label="Open call traffic and matched revenue analysis">
             <div class="card-header">
-              <h3>VoNR Call Traffic vs Telecom Revenue</h3>
-              <button class="btn btn-sm btn-secondary" onclick="app.switchTab('calls')">View Call Logs</button>
+              <div class="header-left">
+                <h3>Recorded IMS Calls &amp; Matched Revenue</h3>
+                <span class="badge badge-voice" style="margin-left: 0.5rem;">From CDRs and ledger</span>
+              </div>
+              <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); app.switchTab('calls')">View Call Logs</button>
             </div>
             <div class="card-body">
-              <div class="chart-container">
-                <div class="chart-legend">
-                  <div class="legend-item">
-                    <span class="legend-dot-cyan"></span>
-                    <span>VoNR Traffic (Calls/hr)</span>
-                  </div>
-                  <div class="legend-item">
-                    <span class="legend-dot-blue"></span>
-                    <span>Revenue (LAB/hr)</span>
-                  </div>
-                </div>
-                <div class="svg-chart-wrapper" id="overview-chart-wrapper">
-                  <svg class="svg-chart" viewBox="0 0 360 145" preserveAspectRatio="none">
-                    <defs>
-                      <linearGradient id="chart-grad-blue" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#0284C7" stop-opacity="0.22"/>
-                        <stop offset="100%" stop-color="#0284C7" stop-opacity="0.0"/>
-                      </linearGradient>
-                      <linearGradient id="chart-grad-cyan" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="0%" stop-color="#06B6D4" stop-opacity="0.22"/>
-                        <stop offset="100%" stop-color="#06B6D4" stop-opacity="0.0"/>
-                      </linearGradient>
-                    </defs>
-
-                    <!-- Grid Lines -->
-                    <line x1="30" y1="15" x2="350" y2="15" stroke="#E2E8F0" stroke-dasharray="3,3"/>
-                    <line x1="30" y1="50" x2="350" y2="50" stroke="#E2E8F0" stroke-dasharray="3,3"/>
-                    <line x1="30" y1="85" x2="350" y2="85" stroke="#E2E8F0" stroke-dasharray="3,3"/>
-                    <line x1="30" y1="120" x2="350" y2="120" stroke="#CBD5E1"/>
-
-                    <!-- Y-Axis Labels -->
-                    <text x="5" y="19" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">100</text>
-                    <text x="5" y="54" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">50</text>
-                    <text x="5" y="89" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">25</text>
-                    <text x="5" y="124" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">0</text>
-
-                    <!-- Shaded Underlay -->
-                    <polygon fill="url(#chart-grad-blue)" points="30,120 30,110 80,90 130,80 180,45 230,55 280,35 330,22 330,120"/>
-                    <polygon fill="url(#chart-grad-cyan)" points="30,120 30,100 80,70 130,60 180,30 230,40 280,25 330,15 330,120"/>
-
-                    <!-- Revenue Line (Vibrant Blue #0284C7) -->
-                    <polyline fill="none" stroke="#0284C7" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="30,110 80,90 130,80 180,45 230,55 280,35 330,22"/>
-
-                    <!-- Call Traffic Line (Luminous Cyan #06B6D4) -->
-                    <polyline fill="none" stroke="#06B6D4" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" points="30,100 80,70 130,60 180,30 230,40 280,25 330,15"/>
-
-                    <!-- Points -->
-                    <circle cx="330" cy="22" r="4.5" fill="#FFFFFF" stroke="#0284C7" stroke-width="2.5"/>
-                    <circle cx="330" cy="15" r="4.5" fill="#FFFFFF" stroke="#06B6D4" stroke-width="2.5"/>
-
-                    <!-- X-Axis Labels -->
-                    <text x="30" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">00:00</text>
-                    <text x="105" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">06:00</text>
-                    <text x="180" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">12:00</text>
-                    <text x="255" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">18:00</text>
-                    <text x="325" y="138" font-size="9" fill="#94A3B8" font-family="'JetBrains Mono', monospace">Now</text>
-                  </svg>
-                </div>
-              </div>
+              <div class="chart-container" id="overview-chart-wrapper" aria-live="polite"><p class="chart-empty-state">Loading recorded call and charging data…</p></div>
             </div>
           </div>
 
-          <!-- Right: Core Network Functions & Slices Table -->
-          <div class="card">
+          <!-- Right: Prometheus-reported 5GC functions -->
+          <div class="card drilldown-target" data-detail="network-functions" role="button" tabindex="0">
             <div class="card-header">
-              <h3>Network Functions &amp; Slices</h3>
-              <span class="badge badge-success" id="nf-badge">All Healthy</span>
+              <h3>Reported 5GC Network Functions</h3>
+              <span class="badge badge-neutral" id="nf-badge">Checking</span>
             </div>
             <div class="card-body" style="padding: 0;">
               <div class="table-responsive">
@@ -293,8 +254,8 @@
                   <thead>
                     <tr>
                       <th>Domain</th>
-                      <th>Function</th>
-                      <th>Port / Slice</th>
+                      <th>Network Function</th>
+                      <th>Status Source</th>
                       <th>Status</th>
                     </tr>
                   </thead>
@@ -304,11 +265,7 @@
                 </table>
               </div>
               <div class="table-pagination-footer">
-                <span>Showing 1-6 of 12 Nodes</span>
-                <div class="pagination-btns">
-                  <button class="btn-page active">1</button>
-                  <button class="btn-page">2</button>
-                </div>
+                <span id="overview-nf-pagination-label">Waiting for Prometheus data</span>
               </div>
             </div>
           </div>
@@ -316,13 +273,47 @@
 
       </section>
 
+      <section id="view-detail" class="view-panel">
+        <div class="panel-header">
+          <div>
+            <button class="detail-back-link" id="detail-back-button" type="button">← Back to Overview</button>
+            <h2 id="detail-title">Operational detail</h2>
+            <p class="subtitle" id="detail-subtitle"></p>
+          </div>
+          <span class="badge badge-neutral" id="detail-status">STATUS</span>
+        </div>
+        <div class="detail-overview-grid" id="detail-summary"></div>
+        <div class="detail-explanation-grid">
+          <article class="card detail-explanation-card"><h3>What this measures</h3><p id="detail-represents"></p></article>
+          <article class="card detail-explanation-card"><h3>Responsible components</h3><p id="detail-components"></p></article>
+          <article class="card detail-explanation-card"><h3>How the process works</h3><p id="detail-process"></p></article>
+        </div>
+        <div class="card detail-data-card">
+          <div class="card-header"><h3 id="detail-data-title">Available operational data</h3><span class="badge badge-neutral" id="detail-data-count"></span></div>
+          <div class="card-body" id="detail-data-content"></div>
+        </div>
+      </section>
+
+      <section id="view-admin" class="view-panel">
+        <div class="panel-header">
+          <div><h2>Admin NOC</h2><p class="subtitle">Operational health, observability links, and existing operator actions</p></div>
+          <button class="btn btn-secondary" id="admin-refresh-button" type="button">Refresh system health</button>
+        </div>
+        <div class="detail-overview-grid" id="admin-health-grid"><p class="chart-empty-state">Loading system health…</p></div>
+        <div class="admin-noc-grid">
+          <article class="card"><div class="card-header"><h3>Operations</h3></div><div class="card-body admin-actions" id="admin-actions"></div></article>
+          <article class="card"><div class="card-header"><h3>Observability endpoints</h3></div><div class="card-body admin-endpoints" id="admin-endpoints"></div></article>
+        </div>
+        <article class="card admin-note"><h3>Access and controls</h3><p>This application does not define a separate role or authentication layer in its frontend. Controls shown here use the same access available to the current application session.</p></article>
+      </section>
+
       <!-- ============================================================= -->
-      <!-- VIEW 2: SUBSCRIBERS & SLICES                                  -->
+      <!-- VIEW 2: SUBSCRIBERS                                           -->
       <!-- ============================================================= -->
       <section id="view-subscribers" class="view-panel">
         <div class="panel-header">
           <div>
-            <h2>Subscriber &amp; Dual-Slice Management</h2>
+            <h2>Subscribers</h2>
             <p class="subtitle">Multi-PLMN SIM identities, allocated IP pools, PDU slice tunnels, and live balance accounts</p>
           </div>
           <div class="header-actions">
@@ -336,12 +327,12 @@
       </section>
 
       <!-- ============================================================= -->
-      <!-- VIEW 3: IMS CALLS & MEDIA                                     -->
+      <!-- VIEW 3: IMS & TRAFFIC                                         -->
       <!-- ============================================================= -->
       <section id="view-calls" class="view-panel">
         <div class="panel-header">
           <div>
-            <h2>IMS Signaling, RTP Media &amp; VoNR Call Control</h2>
+            <h2>IMS &amp; Traffic</h2>
             <p class="subtitle">SIP Digest MD5 sessions, RTPEngine SDP proxying, real-time bi-directional G.711 voice media, user-controlled duration &amp; rated billing events</p>
           </div>
           <div class="header-actions">
@@ -450,7 +441,7 @@
                 <!-- Call Metrics & Quick Hangup -->
                 <div class="hud-metrics">
                   <div class="hud-timer" id="hud-timer-display">00:00</div>
-                  <div class="hud-packets" id="hud-packets-display">0 RTP Packets • 0% Loss</div>
+                  <div class="hud-packets" id="hud-packets-display">RTP packet telemetry unavailable</div>
                 </div>
 
                 <div>
@@ -526,8 +517,8 @@
                     <th>Callee</th>
                     <th>Duration</th>
                     <th>SIP Status</th>
-                    <th>RTP Media</th>
-                    <th>Rated Charge</th>
+                    <th>Call Type</th>
+                    <th>Matched Charge</th>
                     <th>Transaction ID</th>
                     <th>Timestamp</th>
                   </tr>
@@ -542,13 +533,13 @@
       </section>
 
       <!-- ============================================================= -->
-      <!-- VIEW 4: REVENUE & CHARGING                                    -->
+      <!-- VIEW 4: BILLING & CHARGING                                    -->
       <!-- ============================================================= -->
       <section id="view-charging" class="view-panel">
         <div class="panel-header">
           <div>
-            <h2>Erlang/OTP Telecom Revenue &amp; Rating Engine</h2>
-            <p class="subtitle">Double-entry prepaid balance ledger, real-time tariffs, idempotency, and automated financial audits</p>
+            <h2>Billing &amp; Charging</h2>
+            <p class="subtitle">Erlang/OTP double-entry prepaid balance ledger, real-time tariffs, idempotency, and automated financial audits</p>
           </div>
           <div class="header-actions">
             <button class="btn btn-secondary" id="btn-open-quote-modal">Rate Quote Calculator</button>
