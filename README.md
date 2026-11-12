@@ -1,595 +1,565 @@
 <p align="center">
-  <img src="docs/images/allo-5g-logo.jpg" alt="ALLO 5G — Telecom Engineering Platform" width="220" style="border-radius: 50%;">
+  <img src="docs/images/allo-5g-logo.jpg" width="168" alt="ALLO 5G logo">
 </p>
 
-<h1 align="center">ALLO 5G</h1>
+<h1 align="center">ALLO - الو</h1>
 
 <p align="center">
-  <strong>5G SA · Kamailio IMS · VoNR · Erlang/OTP Charging · Multi-PLMN Roaming</strong>
+  <strong>A hands-on 5G Standalone, IMS voice, charging, and observability lab</strong>
 </p>
 
 <p align="center">
-  <a href="https://open5gs.org/"><img src="https://img.shields.io/badge/5G%20Core-Open5GS%20v2.8.0-1E40AF?style=flat-square&logo=signal" alt="5G Core"></a>
-  <a href="https://www.kamailio.org/"><img src="https://img.shields.io/badge/IMS-Kamailio%20v5.6%20%7C%20VoNR-2E7D32?style=flat-square" alt="IMS"></a>
-  <a href="https://github.com/sipwise/rtpengine"><img src="https://img.shields.io/badge/Media-RTPEngine%20%7C%20G.711%20PCMU-E65100?style=flat-square" alt="Media"></a>
-  <a href="services/charging-erlang/"><img src="https://img.shields.io/badge/Charging-Erlang%2FOTP%2025%20%7C%20Cowboy-D32F2F?style=flat-square&logo=erlang" alt="Charging"></a>
-  <a href="services/telecom-gui/"><img src="https://img.shields.io/badge/Control%20Center-GUI%20%3A8088-1E3A8A?style=flat-square" alt="GUI"></a>
-  <a href="k8s/"><img src="https://img.shields.io/badge/Platform-Kubernetes%20%7C%20kind-326CE5?style=flat-square&logo=kubernetes" alt="Platform"></a>
-  <a href="k8s/monitoring/"><img src="https://img.shields.io/badge/Observability-Prometheus%20%2B%20Grafana-F46800?style=flat-square&logo=grafana" alt="Observability"></a>
-  <a href="scripts/"><img src="https://img.shields.io/badge/Regression-212%2F212%20PASS-2E7D32?style=flat-square" alt="Tests"></a>
+  <a href="LICENSE"><img src="https://img.shields.io/badge/license-MIT-2563eb?style=flat-square" alt="MIT License"></a>
+  <img src="https://img.shields.io/badge/5G%20Core-Open5GS%202.8.0-2563eb?style=flat-square" alt="Open5GS 2.8.0">
+  <img src="https://img.shields.io/badge/IMS-Kamailio%20%2B%20RTPEngine-16a34a?style=flat-square" alt="Kamailio and RTPEngine">
+  <img src="https://img.shields.io/badge/Platform-Kubernetes%20%2F%20kind-326ce5?style=flat-square" alt="Kubernetes with kind">
+  <img src="https://img.shields.io/badge/Charging-Erlang%2FOTP%20%2B%20Python-c2410c?style=flat-square" alt="Erlang OTP and Python charging">
 </p>
 
----
+ALLO is a local engineering environment for exploring a cloud-native 5G SA core and IMS voice service end to end. It combines Open5GS network functions on Kubernetes, UERANSIM radio and UE processes, Kamailio IMS with RTPEngine, lab-focused charging services, Prometheus-based telemetry, and the ALLO Control Center.
 
-ALLO - الو is an engineering-grade 5G telecom laboratory that integrates a complete service chain — 3GPP 5G Standalone Core, multi-PLMN roaming with Local Breakout, Kamailio IMS with real VoNR voice calls over RTPEngine, an Erlang/OTP prepaid charging engine, and a live operations control center — all running on Kubernetes, fully observable through Prometheus and Grafana, and regression-tested with 212 automated checks.
+The project is designed for protocol integration, operations practice, service assurance, and revenue-workflow experimentation. The RAN is simulated; this is not a production mobile network or a production-grade 3GPP CHF/OCS implementation.
 
-![ALLO - الو Operations & Revenue Control Center](docs/images/GUI-ALLO.png)
+## Contents
 
----
+- [At a glance](#at-a-glance)
+- [Technology stack](#technology-stack)
+- [Capabilities](#capabilities)
+- [Architecture](#architecture)
+- [End-to-end service chain](#end-to-end-service-chain)
+- [Billing and charging](#billing-and-charging)
+- [Roaming, QoS, VoNR, and subscribers](#roaming-qos-vonr-and-subscribers)
+- [Monitoring and observability](#monitoring-and-observability)
+- [Frontend: ALLO Control Center](#frontend-allo-control-center)
+- [Install, deploy, and verify](#install-deploy-and-verify)
+- [Endpoints and APIs](#endpoints-and-apis)
+- [Repository map and documentation](#repository-map-and-documentation)
+- [Scope and security](#scope-and-security)
 
+## At a glance
 
+| Area | What is in the repository |
+| --- | --- |
+| 5G SA core | Open5GS 2.8.0 manifests for home and visited AMF/SMF roles, UPF, NRF, AUSF, UDM, UDR, PCF, BSF, and MongoDB |
+| Radio and UE simulation | Three UERANSIM gNodeB configurations and three UE configurations for two home PLMNs and one visited PLMN |
+| IMS and voice | Kamailio P-, I-, and S-CSCF deployments, RTPEngine, SIP registration/call scripts, and G.711 PCMU media test paths |
+| Charging | Erlang/OTP REST charging service, Python charging-server fallback, and a separate Python offline rating engine backed by SQLite |
+| Observability | Telecom Prometheus exporter, Prometheus, Grafana dashboard provisioning, and Alertmanager rules |
+| Operations UI | Python HTTP server and a browser-native HTML/CSS/JavaScript single-page application |
+| Deployment | Kubernetes manifests, kind cluster configuration, UERANSIM configs, charging tariffs, and shell-based operational/verification scripts |
 
----
+## Technology stack
+
+Versions below come from image tags, lock/config files, or the repository's deployment guide. A component described as unpinned inherits its version from the external checkout or the Debian package repository at image-build time.
+
+| Technology | Version / source | Role |
+| --- | --- | --- |
+| Open5GS | `gradiant/open5gs:2.8.0` | 5G core network functions |
+| Kubernetes / kind | `kind` cluster defined in `k8s/kind-config.yaml`; the deployment guide uses kind `v0.24.0` | Local Kubernetes orchestration |
+| Container runtime | Rootful Podman through the `podman-docker` CLI compatibility package in the documented RHEL setup | Builds and runs the kind node and local images |
+| UERANSIM | Upstream checkout; the current development checkout is `v3.3.0-60-g4f45e18f`, but the main repository does not pin or vendor it | Simulated gNodeBs, UEs, NAS, NGAP, and GTP-U |
+| IMS | Kamailio and RTPEngine packages installed into a Debian 12 based `ims-node` image; package versions are not pinned in the manifests | SIP signaling, registration, SDP control, and RTP relay |
+| MongoDB | `mongo:8.0` | Open5GS subscriber data store |
+| Charging API | Erlang/OTP `25` or later per the project guide; Cowboy `2.10.0`, JSX `3.1.0` | Concurrent charging API, balance lifecycle, and reconciliation |
+| Python services | Python `3.10+` per the project guide | GUI/API server, exporter, charging fallback, offline rating and operations |
+| Offline charging store | SQLite 3 with WAL mode | Persistent Python usage-rating database at `data/charging.sqlite` |
+| Monitoring | Prometheus `v2.45.0`, Grafana `10.4.0`, Alertmanager `v0.25.0` | Scraping, dashboards, and alert delivery |
+| Frontend | Native HTML, CSS, and JavaScript served by Python; no npm build step is used by the GUI runner | ALLO Control Center |
+
+The root package.json declares React, React DOM, XYFlow, and related JavaScript dependencies, but it defines no build scripts and the current Control Center does not import them. They are not required to run the checked-in frontend.
+
+## Capabilities
+
+- **5G SA registration and sessions:** SIM profiles are provisioned into MongoDB; UEs register through the simulated RAN and request `internet` and `ims` DNN sessions on S-NSSAI SST 1.
+- **Separated home and visited access:** Home gNodeBs serve PLMNs `602/03` and `602/04`; a separate visited gNodeB serves `218/90`.
+- **IMS registration and voice:** Kamailio handles SIP registration and session routing. RTPEngine rewrites SDP and relays RTP media.
+- **Roaming lab flow:** UE3 retains a home identity in `602/03`, attaches through the visited `218/90` RAN/core path, and uses the configured local-breakout route.
+- **Charging and revenue assurance:** Configurable voice/data tariffs, prepaid balance operations, usage rating, transaction history, and reconciliation.
+- **Operational visibility:** Prometheus metrics cover infrastructure, core, IMS, RTP, usage, QoE, and roaming domains; Grafana dashboards and Alertmanager rules are provisioned as Kubernetes resources.
+- **Control Center:** Overview, subscribers, IMS traffic, billing, topology, and Admin NOC views backed by the project's API endpoints.
+- **Repeatable operations:** Scripts provision subscribers, start services, trigger IMS calls, collect/rate usage, and verify the running lab.
 
 ## Architecture
 
-```mermaid
-graph LR
-    subgraph RAN["UERANSIM Multi-PLMN RAN"]
-        UE1["UE1 — Egypt 602/03"]
-        UE2["UE2 — Egypt 602/04"]
-        UE3["UE3 — Roaming 218/90"]
+The following view reflects the checked-in Kubernetes manifests and current UERANSIM configurations. The home and visited SMFs currently use one shared Open5GS UPF deployment; there is not a separate V-UPF pod.
+
+~~~mermaid
+flowchart LR
+    subgraph RAN["Host processes — UERANSIM"]
+        UE1["UE1<br/>Home PLMN 602/03"]
+        UE2["UE2<br/>Home PLMN 602/04"]
+        UE3["UE3<br/>HPLMN 602/03"]
+        GNBH["gNodeB-Home<br/>N2 :38412"]
+        GNBH2["gNodeB-Home2<br/>N2 :38412"]
+        GNBV["gNodeB-Visited<br/>PLMN 218/90<br/>N2 :38413"]
+        UE1 --> GNBH
+        UE2 --> GNBH2
+        UE3 --> GNBV
     end
 
-    subgraph CORE["Open5GS 5G SA Core (kind cluster)"]
-        AMF["Home AMF :38412"]
-        VAMF["Visited AMF :38413"]
-        SMF["SMF + V-SMF"]
-        UPF["UPF — GTP-U :2152 / PFCP :8805"]
-        NRF["NRF + UDM + UDR + AUSF + PCF + BSF"]
-        DB["MongoDB (subscriber store)"]
+    subgraph KIND["kind cluster — node 172.19.0.2"]
+        subgraph CORE["open5gs namespace"]
+            HAMF["Home AMF"]
+            VAMF["Visited AMF"]
+            HSMF["Home SMF"]
+            VSMF["Visited SMF"]
+            UPF["Open5GS UPF<br/>ogstun / N3 / N4"]
+            NRF["NRF"]
+            AUSF["AUSF"]
+            UDM["UDM / UDR"]
+            PCF["PCF / BSF"]
+            DB[("MongoDB<br/>subscriber profiles")]
+            HAMF --> HSMF
+            VAMF --> VSMF
+            HSMF -->|"N4 PFCP"| UPF
+            VSMF -->|"N4 PFCP"| UPF
+            VAMF -. "N12 home authentication" .-> AUSF
+            AUSF --> UDM --> DB
+            NRF --- HAMF
+            NRF --- VAMF
+            NRF --- HSMF
+            NRF --- VSMF
+            HSMF --> PCF
+            VSMF --> PCF
+        end
+
+        subgraph IMS["ims namespace"]
+            PCSCF["Kamailio P-CSCF<br/>SIP :5060"]
+            ICSCF["Kamailio I-CSCF"]
+            SCSCF["Kamailio S-CSCF<br/>registrar / CDR"]
+            RTP["RTPEngine<br/>NG :22222 / RTP relay"]
+            PCSCF --> ICSCF --> SCSCF
+            PCSCF <-->|"NG control"| RTP
+        end
+
+        subgraph OBS["monitoring namespace"]
+            EXP["Telecom exporter :9100"]
+            PROM["Prometheus :9090"]
+            GRAF["Grafana :3000"]
+            ALERT["Alertmanager :9093"]
+            EXP --> PROM
+            PROM --> GRAF
+            PROM --> ALERT
+        end
+
+        UPF -->|"IMS DNN"| PCSCF
+        UPF -->|"Internet DNN / N6"| INTERNET["Data network / host routing"]
     end
 
-    subgraph IMS["Kamailio IMS Service Layer"]
-        PCSCF["P-CSCF :5060"]
-        ICSCF["I-CSCF"]
-        SCSCF["S-CSCF (SQLite CDRs)"]
-        RTPE["RTPEngine :22222"]
-    end
+    GNBH -->|"N2 NGAP / SCTP"| HAMF
+    GNBH2 -->|"N2 NGAP / SCTP"| HAMF
+    GNBV -->|"N2 NGAP / SCTP"| VAMF
+    GNBH -->|"N3 GTP-U"| UPF
+    GNBH2 -->|"N3 GTP-U"| UPF
+    GNBV -->|"N3 GTP-U"| UPF
+    PCSCF -. "SIP signaling over IMS PDU session" .-> UE1
+    PCSCF -. "SIP signaling over IMS PDU session" .-> UE2
+    PCSCF -. "SIP signaling over IMS PDU session" .-> UE3
+    UE1 <-->|"RTP via RTPEngine"| RTP
+    UE2 <-->|"RTP via RTPEngine"| RTP
+    UE3 <-->|"RTP via RTPEngine"| RTP
+~~~
 
-    subgraph BSS["Revenue & Observability"]
-        ERL["Erlang/OTP Charging :8085"]
-        PROM["Prometheus :30090"]
-        GRAF["Grafana :30300"]
-        ALERT["Alertmanager :30093"]
-        GUI["ALLO - الو GUI :8088"]
-    end
+The cluster is defined by `k8s/kind-config.yaml`; core, IMS, and monitoring resources are deployed in the `open5gs`, `ims`, and `monitoring` namespaces. UERANSIM runs on the Linux host and communicates with the kind node over the configured `172.19.0.0/16` network.
 
-    UE1 & UE2 -->|N1/N2 SCTP| AMF
-    UE3 -->|N1/N2 SCTP| VAMF
-    AMF & VAMF --> SMF -->|N4 PFCP| UPF
-    UE1 & UE2 & UE3 -->|N3 GTP-U| UPF
-    UPF -->|N6 IMS Bearer| PCSCF
-    PCSCF --> ICSCF --> SCSCF
-    PCSCF <--> RTPE
-    SCSCF -.->|CDR + POST /v1/charging/events| ERL
-    ERL & CORE & IMS --> PROM --> GRAF
-    PROM --> ALERT
-    ERL & PROM --> GUI
-```
+## End-to-end service chain
 
-**12 pods** on a single `kind` Kubernetes node (`172.19.0.2`), with UERANSIM gNodeBs and UEs running as native Linux processes using dedicated network namespaces for each PDU session.
-
----
-
-## Multi-PLMN & Roaming
-
-ALLO - الو operates three PLMNs across two isolated gNodeB instances:
-
-| Subscriber | IMSI | Home PLMN | Serving PLMN | Roaming | gNodeB | Internet IP Range | IMS IP Range |
-| :--- | :--- | :--- | :--- | :--- | :--- | :--- | :--- |
-| **UE1** | `602030000000001` | `602/03` (Egypt) | `602/03` | Domestic | Home (`127.0.0.1`) | `10.45.0.10–99` | `10.46.0.10–99` |
-| **UE2** | `602040000000002` | `602/04` (Egypt) | `602/04` | Domestic | Home (`127.0.0.1`) | `10.45.0.10–99` | `10.46.0.10–99` |
-| **UE3** | `602030000000003` | `602/03` (Egypt) | `218/90` (Bosnia) | Visited LBO | Visited (`127.0.0.2`) | `10.45.0.100–199` | `10.46.0.100–199` |
-
-UE3 retains its Egyptian home identity (`602/03`) but attaches over radio to the **Visited AMF** serving PLMN `218/90` (BH Telecom, Bosnia). Because `serving_plmn ≠ home_plmn`, the entire stack — SMF IP pool selection, rating engine destination classification, charging tariff matching, GUI display, and Prometheus roaming telemetry — treats UE3 as a roaming subscriber under the `premium-roaming` rate plan.
-
-**Dual PDU sessions per UE:**
-- **Internet** (`DNN: internet`) — `10.45.0.0/16`, QCI/5QI 9, ARP priority 8
-- **IMS** (`DNN: ims`) — `10.46.0.0/16`, QCI/5QI 5, ARP priority 1
-
-Each PDU session creates a dedicated Linux network namespace (`ueransim-<imsi>-internet-psi1` and `ueransim-<imsi>-ims-psi2`) with its own `uesimtun0` TUN interface.
-
----
-
-## 5G SA Core Network
-
-All Open5GS 3GPP Release 16 Network Functions run as Kubernetes deployments in the `open5gs` namespace:
-
-| Network Function | SBI / Interface | Service Port | Notes |
-| :--- | :--- | :--- | :--- |
-| **NRF** | `open5gs-nrf:7777` | SBI | Service discovery |
-| **AMF** (Home) | `open5gs-amf:7777` | SCTP `:38412` | PLMNs 602/03 + 602/04 |
-| **AMF** (Visited) | `open5gs-v-amf:7777` | SCTP `:38413` | PLMN 218/90 |
-| **SMF** (Home) | `open5gs-smf:7777` | PFCP `:8805` | DNNs: `internet`, `ims` |
-| **SMF** (Visited) | `open5gs-v-smf:7777` | PFCP `:8805` | LBO for 218/90 |
-| **UPF** | `hostNetwork` | GTP-U `:2152`, PFCP `:8805` | `ogstun` gateway: `10.45.0.1` + `10.46.0.1` |
-| **UDR** | `open5gs-udr:7777` | SBI | MongoDB backend |
-| **UDM** | `open5gs-udm:7777` | SBI | 5G-AKA |
-| **AUSF** | `open5gs-ausf:7777` | SBI | Authentication |
-| **PCF** | `open5gs-pcf:7777` | SBI | Policy |
-| **BSF** | `open5gs-bsf:7777` | SBI | Binding |
-| **MongoDB** | `mongodb:27017` | TCP | Subscriber store |
-
-**S-NSSAI:** SST `1` (eMBB), SD `0xFFFFFF` across all PLMNs.
-
-**UPF QoS traffic control** on `ogstun`:
-- Priority Band 1: SIP signaling (port 5060), RTP voice (DSCP EF / 46), IMS signaling (DSCP CS5 / 40)
-- NAT MASQUERADE for both `10.45.0.0/16` and `10.46.0.0/16`
-
----
-
-## IMS Voice Service Layer
-
-The IMS stack runs in the `ims` Kubernetes namespace:
-
-| Component | Deployment | Binding | Role |
-| :--- | :--- | :--- | :--- |
-| **P-CSCF** | `kamailio-pcscf` | `hostNetwork` — `10.46.0.1:5060` + `172.19.0.2:5060` | UE-facing SIP proxy, RTPEngine integration, RFC 3327 Path routing |
-| **I-CSCF** | `kamailio-icscf` | ClusterIP `:5060` | Interrogating proxy for domain routing |
-| **S-CSCF** | `kamailio-scscf` | ClusterIP `:5060` | SIP Digest MD5 authentication (`auth_db`), `usrloc` registrar, dialog tracking, CDR recording to SQLite |
-| **RTPEngine** | `rtpengine` | `hostNetwork` — `10.46.0.1:22222` (NG), UDP `20000–20100` (media) | SDP offer/answer rewriting, bidirectional G.711 PCMU relay |
-
-**SIP subscriber credentials:**
-
-| UE | SIP URI | Password |
-| :--- | :--- | :--- |
-| UE1 | `sip:ue1@ims.lab` | `password123` |
-| UE2 | `sip:ue2@ims.lab` | `password123` |
-| UE3 | `sip:ue3@ims.lab` | `password123` |
-
-![SIP call signaling flow](docs/images/sip-call-flow.png)
-
----
-
-## End-to-End Call & Charging Flow
-
-```mermaid
+~~~mermaid
 sequenceDiagram
     autonumber
-    participant UE1 as Caller (UE1 — Home 602/03)
-    participant PCSCF as P-CSCF (10.46.0.1:5060)
-    participant SCSCF as S-CSCF (Digest Auth + CDR)
-    participant RTP as RTPEngine (10.46.0.1:22222)
-    participant UE3 as Callee (UE3 — Roaming 218/90)
-    participant CHF as Erlang/OTP CHF (:8085)
+    participant UE1 as Caller UERANSIM UE
+    participant UE2 as Callee UERANSIM UE
+    participant GNB as Home / visited gNodeB
+    participant AMF as Open5GS AMF
+    participant SMF as Open5GS SMF
+    participant UPF as Shared Open5GS UPF
+    participant P as Kamailio P-CSCF
+    participant I as Kamailio I-CSCF
+    participant S as Kamailio S-CSCF
+    participant RTP as RTPEngine
+    participant TEST as Call / usage script
+    participant CHG as Charging API
+    participant CDR as S-CSCF SQLite CDR
 
-    UE1->>PCSCF: REGISTER (via IMS netns)
-    PCSCF->>SCSCF: REGISTER (Path header)
-    SCSCF-->>PCSCF: 401 Unauthorized (Digest challenge)
-    PCSCF-->>UE1: 401 Unauthorized
-    UE1->>PCSCF: REGISTER (Digest response)
-    PCSCF->>SCSCF: REGISTER
-    SCSCF-->>PCSCF: 200 OK (binding stored)
-    PCSCF-->>UE1: 200 OK
+    UE1->>GNB: Simulated NR access
+    UE2->>GNB: Simulated NR access
+    GNB->>AMF: N2 NGAP over SCTP
+    AMF->>SMF: 5G core service-based control
+    SMF->>UPF: N4 PFCP session programming
+    GNB->>UPF: N3 GTP-U user plane
+    UE1->>P: IMS PDU session; SIP REGISTER
+    P->>I: Route registration / session
+    I->>S: Resolve subscriber and registrar state
+    S-->>UE1: SIP Digest challenge and registration response
+    UE1->>P: SIP INVITE with SDP offer
+    P->>I: Forward SIP dialog
+    I->>S: Route within IMS domain
+    S->>P: Route to registered callee
+    P->>UE2: SIP INVITE
+    UE2-->>P: 180 Ringing, then 200 OK with SDP answer
+    P->>RTP: RTPEngine offer / answer control
+    RTP-->>P: Rewritten SDP
+    UE1->>RTP: G.711 PCMU RTP media
+    RTP->>UE2: Relayed RTP media
+    UE2->>RTP: Return RTP media
+    RTP->>UE1: Relayed RTP media
+    UE1->>P: SIP BYE
+    S->>CDR: Store completed dialog CDR
+    TEST->>CHG: POST completed call usage to /v1/charging/events
+~~~
 
-    UE1->>PCSCF: INVITE sip:ue3@ims.lab (SDP offer)
-    PCSCF->>RTP: rtpengine_offer (replace-origin, replace-session-connection)
-    PCSCF->>SCSCF: INVITE (rewritten SDP)
-    SCSCF->>PCSCF: INVITE → UE3 contact
-    PCSCF->>RTP: rtpengine_offer
-    PCSCF->>UE3: INVITE (rewritten SDP)
-    UE3-->>PCSCF: 200 OK (SDP answer)
-    PCSCF->>RTP: rtpengine_answer
-    PCSCF-->>SCSCF: 200 OK
-    SCSCF-->>PCSCF: 200 OK
-    PCSCF-->>UE1: 200 OK
-    UE1->>PCSCF: ACK
+A successful call exercises both the 5G user plane and IMS signaling: SIP uses the UE's `ims` PDU session, while SDP negotiation directs media through RTPEngine. The call and usage scripts collect signaling, media, and billing evidence from the active lab rather than from a generated dashboard fixture.
 
-    UE1<<-->>UE3: Bidirectional G.711 PCMU RTP (25/25 packets, 0% loss)
+## Billing and charging
 
-    UE1->>PCSCF: BYE
-    PCSCF->>RTP: rtpengine_delete
-    PCSCF->>SCSCF: BYE
-    SCSCF->>SCSCF: INSERT CDR into SQLite (duration, caller, callee)
-    SCSCF-->>PCSCF: 200 OK
-    PCSCF-->>UE1: 200 OK
+ALLO contains two related lab charging paths:
 
-    SCSCF->>CHF: POST /v1/charging/events (Call-ID, duration, caller, callee)
-    Note over CHF: classify_destination → roaming_vplmn<br/>match_tariff → premium-roaming voice<br/>0.1000 setup + 10 × 0.0400/s = 0.5000 LAB
-    CHF->>CHF: Debit balance_available, credit balance_consumed
-    CHF->>CHF: Append immutable ledger transaction
-    CHF-->>SCSCF: 200 OK (status: CHARGED)
-```
+1. **Charging REST service (`:8085`)** — `scripts/run-erlang-charging.sh` starts the Erlang/OTP service when Erlang and rebar3 are installed. Otherwise it starts `services/charging-server.py` as a Python-compatible service. Both expose the charging API used by the Control Center and call scripts.
+2. **Offline rating engine** — `scripts/rating-engine.py` reads completed Kamailio SQLite CDRs and available UE network-interface counters, applies YAML rate-plan/tariff rules, and stores its rated usage and transaction data in `data/charging.sqlite`.
 
-**Worked example — UE3, 10-second roaming call:**
-```
-Initial Balance: 30.0 LAB
-Call Duration:   10 seconds
-Total Charge:    0.5000 LAB
-Remaining:       29.5 LAB
-```
+~~~mermaid
+flowchart LR
+    CDR["Kamailio S-CSCF<br/>completed dialog CDRs"]
+    NETNS["UE Linux namespaces<br/>interface byte counters"]
+    PY["Python offline rating<br/>scripts/rating-engine.py"]
+    SQLITE[("SQLite<br/>data/charging.sqlite")]
+    GUI["ALLO Control Center<br/>and call scripts"]
+    API["Charging HTTP API :8085<br/>Erlang/OTP or Python fallback"]
+    TARIFF["YAML rate plans<br/>and tariffs"]
+    AUDIT["Reconciliation<br/>and transaction reports"]
 
----
+    CDR --> PY
+    NETNS --> PY
+    TARIFF --> PY
+    PY --> SQLITE
+    GUI --> API --> AUDIT
+~~~
 
-## Revenue & Charging Engine
+Tariff selection uses service type, destination classification (domestic or `roaming_vplmn`), rate plan, and—for data—DNN. Voice rules support setup charges, minimum billable time, and ceiling increments; data rules use byte quantities and configured granularity. The configured currency label is `LAB`.
 
-The Erlang/OTP charging service ([`services/charging-erlang/`](services/charging-erlang/)) implements a production-style prepaid revenue engine:
+The charging model demonstrates reservations, consumption, refunds/releases, idempotent references, and account reconciliation. The Python offline database is persistent SQLite; the Erlang service initializes its own in-process state from configured defaults. Do not assume every endpoint uses the same persistence store.
 
-**OTP supervision tree:**
-```
-charging_service_app
-└── charging_service_sup (one_for_one)
-    └── charging_server (gen_server)
-        ├── charging_rating   — deterministic tariff matching & charge calculation
-        ├── charging_reconcile — double-entry financial audit
-        └── charging_storage   — seed data adapter
-```
+This is an engineering and rating demonstration, **not** a 3GPP Online Charging System or 5G CHF implementation: Nchf charging integration is not present.
 
-**Cowboy REST API on `:8085`:**
+## Roaming, QoS, VoNR, and subscribers
 
-| Method | Endpoint | Purpose |
-| :--- | :--- | :--- |
-| `GET` | `/health` | OTP application health |
-| `GET` | `/v1/accounts` | All subscriber accounts |
-| `GET` | `/v1/accounts/:id/balance` | Prepaid balance inquiry |
-| `GET` | `/v1/accounts/:id/transactions` | Transaction ledger |
-| `GET` | `/v1/tariffs` | Tariff definitions |
-| `GET` | `/v1/reconciliation` | Financial audit report |
-| `POST` | `/v1/rating/quote` | Rate quote without debit |
-| `POST` | `/v1/charging/reserve` | Lock credit hold (402 if insufficient) |
-| `POST` | `/v1/charging/consume` | Finalize debit, refund excess |
-| `POST` | `/v1/charging/events` | Rate + debit in single atomic call |
-| `POST` | `/v1/accounts/:id/topup` | Add prepaid credit |
+### Roaming
 
-**Prepaid accounts:**
+The configured subscriber/RAN scenarios are:
 
-| Account | Subscriber | PLMN | Rate Plan | Initial Balance |
-| :--- | :--- | :--- | :--- | :--- |
-| `acc-ue1` | UE1 Domestic | `602/03` | `standard-prepaid` | 50.00 LAB |
-| `acc-ue2` | UE2 Domestic | `602/04` | `standard-prepaid` | 25.00 LAB |
-| `acc-ue3` | UE3 Roaming | `602/03` → `218/90` | `premium-roaming` | 30.00 LAB |
+| UE | Home PLMN | Serving PLMN | Access path |
+| --- | --- | --- | --- |
+| UE1 | `602/03` | `602/03` | Home RAN and Home AMF |
+| UE2 | `602/04` | `602/04` | Home2 RAN and Home AMF |
+| UE3 | `602/03` | `218/90` | Visited RAN and Visited AMF/SMF |
 
-**Tariff schedule:**
+For UE3, the visited AMF requests home authentication through the Open5GS service-based core path, while the visited SMF provides the visited session-control path. Both SMFs currently program the shared UPF instance. This is a lab local-breakout scenario; the manifests do not deploy SEPP/N32 protection or a separate visited UPF, and home-routed roaming over N9/N16 is not implemented.
 
-| Tariff | Service | Destination | Setup | Rate | Unit |
-| :--- | :--- | :--- | :--- | :--- | :--- |
-| Domestic Voice | voice | domestic | 0.0500 LAB | 0.0200 LAB/s | 1s, CEIL |
-| Roaming Voice (standard) | voice | roaming_vplmn | 0.1500 LAB | 0.0800 LAB/s | 1s, CEIL |
-| Roaming Voice (premium) | voice | roaming_vplmn | 0.1000 LAB | 0.0400 LAB/s | 1s, CEIL |
-| Domestic Data (internet) | data | domestic | — | 0.0100 LAB/MB | 1 MB |
-| Roaming Data (internet) | data | roaming_vplmn | — | 0.0500 LAB/MB | 1 MB |
-| IMS Signaling (any) | data | any | — | 0.0000 LAB | Zero-rated |
+### QoS
 
-**Financial guarantees:**
-- Three-bucket balance: `available`, `reserved`, `consumed`
-- Double-entry ledger: every operation (`TOPUP`, `CHARGE`, `RESERVE`, `CONSUME`, `RELEASE`) recorded as an immutable transaction
-- Idempotency: duplicate Call-ID charges rejected — no double debits
-- Reconciliation invariant: `available + consumed + reserved ≡ Σ top-ups`, verified with 0 anomalies
-- OTP supervision: worker crashes trigger automatic restart without data loss
+The UPF startup command configures a Linux `tc` priority qdisc on `ogstun`, with filters for SIP port 5060 and selected IP ToS/DSCP values. This is host-level traffic classification for the lab; it is not a claim of a fully provisioned end-to-end 5QI QoS policy.
 
-![Charging CLI — balance inquiry, transaction history, and reconciliation](docs/images/charging-cli-validation.png)
+### VoNR / IMS voice
 
----
+The lab demonstrates simulated IMS voice over 5G PDU sessions. Kamailio handles P-/I-/S-CSCF signaling and registration, and RTPEngine handles SDP rewriting and RTP relay. The call flow uses SIP Digest authentication and G.711 PCMU media. It is an emulated UE/RAN/core environment, not a connection to commercial radio equipment.
 
-## Operations Control Center
+### Subscriber management
 
-The ALLO - الو GUI ([`services/telecom-gui/`](services/telecom-gui/)) is a zero-dependency Python HTTP server + vanilla JavaScript SPA on port `:8088`.
+- `scripts/add-subscriber.sh` provisions the test subscriber profiles into the Open5GS MongoDB store.
+- UERANSIM UE configurations provide the corresponding test identities and authentication material; the UERANSIM checkout and binaries are external to the tracked repository.
+- IMS registration credentials are configured for the lab S-CSCF and stored separately from Open5GS subscription profiles.
+- The Control Center reads subscriber, charging, CDR, and network information from the backend APIs and configured local telemetry sources.
 
-**Views:**
+## Monitoring and observability
 
-| View | Content |
-| :--- | :--- |
-| **Overview** | Animated service chain pipeline (UE-RAN → 5GC-SA → IMS-SIP → RTP-PROXY → CHF-RATING → CGF-LEDGER → AUDIT-REC), 4-card KPI strip (NFs, UEs, Revenue, MOS), VoNR call traffic chart, NF status table |
-| **Subscribers & Slices** | Per-UE PLMN role, dual PDU session state, live namespace RX/TX counters, direct balance top-up |
-| **IMS Calls & Media** | One-click domestic (UE1↔UE2) and roaming (UE1↔UE3) call triggers with custom duration, live SIP/RTP log streaming, CDR table with billed charges |
-| **Revenue & Charging** | Account balances, tariff table, quote calculator, full double-entry ledger, on-demand reconciliation |
-| **Network Topology** | Multi-PLMN node map with live port and interface status across 5GC, IMS, RAN, and charging domains |
+Prometheus scrapes the telecom exporter and Prometheus itself on a **5-second** scrape/evaluation interval. The exporter is packaged into the local `ims-node` image and exposes `/metrics` on port `9100`.
 
-**Backend integrations:** Erlang charging (`:8085`), Prometheus (`:30090`), Alertmanager (`:30093`), Kamailio S-CSCF SQLite CDRs (via `kubectl exec`), Linux netns TUN counters.
+The metric families cover:
 
-**Features:** collapsible sidebar with animation, animated ALLO - الو logo (blue + red SVG with wave-pulse and beacon-glow), global IMSI/MSISDN/CDR search, configurable auto-refresh (3s–30s).
+- Kubernetes pod readiness and restart state.
+- Open5GS NF status, registered UEs, PDU sessions, N2 associations, PFCP status, and GTP-U counters.
+- Kamailio SIP status, registration state, request counters, and dialogs.
+- RTPEngine availability, sessions, relay packets/bytes, and errors.
+- CDR counts and call duration.
+- Service assurance metrics such as PDD, CST, CSSR, packet loss, jitter, R-factor, and estimated MOS.
+- Roaming attachment, local-breakout state, and inter-PLMN call metrics.
+- Charging balances, transaction totals, usage, and reconciliation signals where exported.
 
----
+Grafana dashboards and Prometheus alert rules are provisioned from Kubernetes ConfigMaps; Alertmanager is exposed separately for alert inspection.
 
-## Observability Stack
+Telemetry sources are mixed and should be interpreted per metric. Pod readiness, Kamailio registrations/CDRs, RTPEngine probe/statistics, and UE/UPF interface counters are collected from runtime queries. Some fixed-topology gauges (including UE/PDU and N2/PFCP states), roaming indicators, charging account/reconciliation values, and QoE fallback values are supplied as scenario defaults or derived in exporter code; revenue is calculated from CDR totals and configured rates rather than read from the Erlang ledger. See the [exporter source](scripts/telecom-exporter.py) and [metrics source map](docs/observability/metrics-source-map.md) before treating a panel as a direct measurement.
 
-All monitoring components run in the `monitoring` Kubernetes namespace:
+### Grafana dashboard
 
-| Component | Port | Purpose |
-| :--- | :--- | :--- |
-| **Telecom Exporter** | `:9100` | Custom Prometheus exporter aggregating 7 telemetry domains |
-| **Prometheus** | NodePort `:30090` | 5-second scrape interval, 2 targets |
-| **Grafana** | NodePort `:30300` | Pre-provisioned dashboard |
-| **Alertmanager** | NodePort `:30093` | Incident notification |
+![Grafana 5G core and IMS operations dashboard](docs/images/grafana-dashboard-overview.png)
 
-**7 telemetry domains:**
+*Grafana operations overview. The values shown are a captured lab state; dashboard values vary with current Prometheus data.*
 
-1. **Infrastructure** (`k8s_infra_*`) — pod readiness, restart counts
-2. **5G Core** (`open5gs_5gc_*`) — registered UEs, active PDU sessions, NGAP/PFCP associations
-3. **IMS / SIP** (`ims_sip_*`) — registered subscribers, server status, active dialogs
-4. **RTP Media** (`ims_rtp_*`) — proxy status, packets relayed
-5. **Charging** (`charging_*`) — CDR records, call duration, revenue
-6. **QoE** (`qoe_telecom_*`) — MOS, CSSR, PDD, jitter, packet loss
-7. **Roaming** (`roaming_*`) — UE attachment status, LBO data path, inter-PLMN calls
+### Voice and revenue telemetry
 
-**Grafana dashboard** — Sections A through H spanning 53+ panels:
+![Grafana voice quality, charging, and roaming telemetry panels](docs/images/grafana-telemetry-kpis.png)
 
-![Grafana — Executive Service Health, Infrastructure, and 5G Core sections](docs/images/grafana-dashboard-overview.png)
+*Telemetry panels include voice-quality indicators, recorded call activity, cumulative call duration, and roaming status.*
 
-![Grafana — KPI Signaling, Offline Charging, and Multi-PLMN Roaming Telemetry](docs/images/grafana-telemetry-kpis.png)
+## Frontend: ALLO Control Center
 
-**26 Alertmanager rules** across 7 groups covering infrastructure degradation, 5GC registration drops, IMS server failures, RTPEngine control loss, QoE degradation, roaming detachment, and charging reconciliation failures. Fault injection verified: scaling `open5gs-bsf` to 0 triggers `FIRING` → restoring to 1 confirms automatic resolution.
+The Control Center is a Python-served single-page application with responsive HTML, CSS, and JavaScript. Its views include Overview, Subscribers, IMS & Traffic, Billing & Charging, Network Topology, and Admin NOC. The API aggregates available local, Kubernetes, Prometheus, and charging-service sources; each value inherits the freshness and fallback behavior of its source. The screenshots below are representative captures, not static metrics used by the application.
 
----
+### Overview
 
-## Service Assurance & KPIs
+![ALLO Control Center overview with service-chain visualizer, live KPIs, call records, and network-function status](docs/images/Screenshot%20From%202026-11-12%2008-29-06.png)
 
-Measured by [`scripts/measure-kpis.sh`](scripts/measure-kpis.sh) using real SIP signaling and RTP streams over Linux network namespaces:
+*Overview and service-chain view captured on 12 November 2026. Counts and balances shown are time-specific and depend on the lab state.*
 
-| KPI | Domestic | Roaming | Target | Method |
-| :--- | :--- | :--- | :--- | :--- |
-| **Post-Dial Delay (PDD)** | ~4 ms | ~4 ms | < 200 ms | SIP INVITE → 180 Ringing timestamp delta |
-| **Call Setup Time (CST)** | ~55 ms | ~54 ms | < 500 ms | SIP INVITE → 200 OK timestamp delta |
-| **CSSR** | 100% | 100% | 100% | Successful call setups / attempts |
-| **RTP Jitter** | ~0.28 ms | ~0.29 ms | < 20 ms | RFC 3550 inter-arrival jitter |
-| **RTP Packet Loss** | 0% | 0% | 0% | Sequence continuity check |
-| **Estimated MOS** | ~4.4 | ~4.4 | ≥ 4.0 | ITU-T G.107 E-model approximation |
-| **R-Factor** | ~92.9 | ~92.9 | — | E-model transmission rating |
+### IMS calls and traffic
 
-DSCP tagging: SIP signaling at CS5 (`0xA0` / DSCP 40), RTP voice at EF (`0xB8` / DSCP 46).
+![IMS and Traffic page with call controls, RTP telemetry state, and CDR table](docs/images/Screenshot%20From%202026-11-12%2008-29-34.png)
 
----
+*The IMS view exposes call controls and recorded CDR fields. RTP telemetry is shown when the running service provides it.*
 
-## Validation & Regression Testing
+### Billing and charging
 
-Every subsystem ships with its own automated verification suite:
+![Billing and Charging page with reconciliation, configured tariffs, and subscriber balances](docs/images/Screenshot%20From%202026-11-12%2008-30-33.png)
 
-| Suite | Scope | Checks |
-| :--- | :--- | :--- |
-| [`verify-lab.sh`](scripts/verify-lab.sh) | 5G Core, RAN, UEs, PDU sessions, Internet + IMS connectivity, IMS calls, charging, KPIs | 91 |
-| [`verify-erlang-charging.sh`](scripts/verify-erlang-charging.sh) | Erlang/OTP compilation, supervision, REST API, rating parity, balance lifecycle, idempotency, fault recovery, reconciliation | 24 |
-| [`verify-rating.sh`](scripts/verify-rating.sh) | Python rating engine, tariff matching, CEIL rounding, CDR ingestion, financial reconciliation | 23 |
-| [`verify-observability.sh`](scripts/verify-observability.sh) | Prometheus exporter, scrape targets, PromQL queries across all 7 domains | 19 |
-| [`verify-alerting.sh`](scripts/verify-alerting.sh) | Alertmanager rules, fault injection, alert firing, automatic resolution | 19 |
-| [`verify-grafana.sh`](scripts/verify-grafana.sh) | Grafana dashboard provisioning, panel queries, live telemetry, restart recovery | 18 |
-| [`verify-gui.sh`](scripts/verify-gui.sh) | GUI server, static assets, REST endpoints, interactive actions, dual-slice IP verification | 18 |
-| **Total** | **All subsystems combined** | **212 / 212 PASS** |
+*Billing view showing the configured tariff matrix, account balance data, and reconciliation status for the captured session.*
 
-![Lab validation output — verify-lab.sh](docs/images/validation-terminal.png)
+The Overview cards, call and revenue visualizations, network-function rows, and service-chain components link to technical drilldowns. Admin NOC links expose health and management functions already available in the application. The GUI does not add a separate identity or role provider.
 
----
+## Install, deploy, and verify
 
-## Repository Structure
+The checked-in bootstrap targets a Linux host using rootful Podman through the Docker-compatible CLI, `kind`, and `kubectl`. The existing deployment guide documents RHEL 10.x. The scripts also configure host IP forwarding/reverse-path filtering and use the `172.19.0.0/16` kind network. Review these host-level requirements before running on a shared machine.
 
-```
-ALLO - الو/
-├── configs/
-│   ├── charging/          # Tariff plans, rate plans, accounts (YAML)
-│   ├── sipp/              # SIP test scenarios
-│   └── ueransim/          # gNodeB and UE configurations (3 UEs, 2 gNodeBs)
-├── docs/
-│   ├── architecture/      # 5G SA architecture, home-vs-visited RAN
-│   ├── charging/          # Rating model, balance management, reconciliation, Erlang API
-│   ├── engineering-notes/ # PDU session debugging, Linux networking, QoS
-│   ├── images/            # Screenshots and diagrams
-│   └── observability/     # Metrics model, Grafana dashboard, alerting, Prometheus
-├── k8s/
-│   ├── ims/               # Kamailio P/I/S-CSCF + RTPEngine manifests
-│   ├── monitoring/        # Prometheus, Grafana, Alertmanager, telecom-exporter
-│   ├── configmap.yaml     # Open5GS NF configurations
-│   ├── control-plane.yaml # AMF, V-AMF, SMF, V-SMF, UDR, UDM, AUSF, PCF, BSF, NRF
-│   ├── upf.yaml           # UPF with hostNetwork, QoS tc rules
-│   ├── mongodb.yaml       # Subscriber database
-│   └── kind-config.yaml   # kind cluster definition
-├── scripts/
-│   ├── start-lab.sh       # Full lab orchestrator (kind + K8s + subscribers)
-│   ├── run-gnb.sh         # Launch gNodeB-Home and/or gNodeB-Visited
-│   ├── run-ue.sh          # Launch UE1, UE2, UE3 with netns management
-│   ├── run-erlang-charging.sh  # Erlang service lifecycle (start/stop/restart/status)
-│   ├── run-gui.sh         # GUI server lifecycle
-│   ├── add-subscriber.sh  # MongoDB subscriber provisioning
-│   ├── test-ims-call.sh   # End-to-end SIP/RTP call engine (domestic, roaming, custom)
-│   ├── measure-kpis.sh    # Real-time PDD, CST, jitter, MOS measurement
-│   ├── collect-charging-records.sh  # CDR and user-plane accounting collector
-│   ├── rating-engine.py   # Python CLI for rating, balance, reconciliation
-│   ├── telecom-exporter.py # Prometheus exporter (7 domains)
-│   ├── verify-lab.sh      # Master regression suite (91 checks)
-│   ├── verify-erlang-charging.sh  # Erlang charging suite (24 checks)
-│   ├── verify-rating.sh   # Rating suite (23 checks)
-│   ├── verify-observability.sh    # Prometheus suite (19 checks)
-│   ├── verify-alerting.sh # Alertmanager suite (19 checks)
-│   ├── verify-grafana.sh  # Grafana suite (18 checks)
-│   └── verify-gui.sh      # GUI suite (18 checks)
-├── services/
-│   ├── charging-erlang/   # Erlang/OTP charging application (Cowboy REST, gen_server)
-│   │   ├── src/           # charging_server, charging_rating, charging_reconcile, etc.
-│   │   ├── test/          # EUnit tests (34 tests across 3 suites)
-│   │   └── include/       # Record definitions (charging_types.hrl)
-│   └── telecom-gui/       # Operations Control Center
-│       ├── server.py      # Python HTTP server with REST API
-│       └── static/        # HTML, CSS, JS, SVG favicon and icons
-├── data/                  # Runtime SQLite databases
-├── CHANGELOG.md
-├── LICENSE                # MIT
-└── README.md
-```
+### Laptop or workstation requirements
 
----
+The repository does not define or validate minimum CPU, memory, or disk capacity. For planning a local all-in-one lab, use a modern **x86_64 Linux** laptop or PC with **4 or more CPU cores, 16 GB RAM, and about 30 GB of free disk space** as a practical starting point; these are recommendations, not measured minimums or a performance guarantee. More headroom helps because the host builds UERANSIM and an IMS image while running a single-node Kubernetes cluster with the 5G core, IMS, and monitoring workloads.
 
-## Prerequisites
+The verified platform requirements are Linux with root/sudo access, a working SCTP kernel module, `/dev/net/tun`, IPv4 forwarding, and the ability to create a Podman network on `172.19.0.0/16`. The documented RHEL 10.2 setup uses rootful Podman plus `podman-docker`; Docker-compatible CLI support, `kind`, and `kubectl` are needed by the bootstrap. Internet access is needed to fetch UERANSIM, download tools, and pull/build container images. Physical radio hardware is not required: UERANSIM supplies the simulated gNodeBs and UEs.
 
-| Dependency | Version | Purpose |
-| :--- | :--- | :--- |
-| Linux (Ubuntu/Debian) | 22.04+ | Host OS with network namespace support |
-| Docker | 20.10+ | Container runtime for kind |
-| [kind](https://kind.sigs.k8s.io/) | 0.20+ | Local Kubernetes cluster |
-| kubectl | 1.28+ | Cluster management |
-| [UERANSIM](https://github.com/aligungr/UERANSIM) | 3.3.0 | `nr-gnb` and `nr-ue` binaries on `$PATH` |
-| Erlang/OTP | 25+ | Charging service runtime |
-| [rebar3](https://rebar3.org/) | 3.22+ | Erlang build tool |
-| Python | 3.10+ | GUI server, rating engine, exporter |
-| mongosh / mongo | 8.0 | Subscriber provisioning (runs inside K8s pod) |
+Before the first run, confirm TUN exists and load SCTP for NGAP. The bootstrap script sets IPv4 forwarding and reverse-path filtering at runtime:
 
-**Pre-built container images** (loaded into kind by `start-lab.sh`):
-- `gradiant/open5gs:2.8.0` — 5G Core NFs
-- `mongo:8.0` — Subscriber database
-- `ims-node:latest` — Kamailio + RTPEngine (must be pre-built)
+~~~bash
+test -c /dev/net/tun
+sudo modprobe sctp
+~~~
 
----
+The supplied RHEL runbook temporarily changed SELinux/firewall settings on its own lab host. Those are not universal project prerequisites; do not persist permissive SELinux or disable the firewall by default. If host firewall policy blocks the lab, allow only the needed lab traffic under the local security policy (including SCTP 38412/38413 and UDP 2152/8805).
 
-## Quick Start
+### Prerequisites
 
-```bash
-# Clone the repository
-git clone https://github.com/khattabpi/ALLO.git
-cd ALLO
+- Linux with root access for kernel networking, SCTP, gNodeB and UE TUN/network-namespace setup.
+- Podman and `podman-docker` (or a compatible Docker CLI/runtime), kind, and kubectl.
+- Python 3.10+, `jq`, `curl`, SQLite, `iproute2`, iptables, SCTP tools, CMake, a C++ compiler, and `make`.
+- Erlang/OTP 25+ and rebar3 for the Erlang charging service. If they are absent, the launcher uses the Python charging-server implementation.
+- A UERANSIM source tree and built binaries. The main repository ignores `UERANSIM/`; the commands below fetch the upstream revision used by the current local development checkout and apply the repository roaming extension.
+- Internet connectivity for container image pulls and Debian package installation during the `ims-node` image build.
 
-# 1. Start the Erlang/OTP charging engine (:8085)
+### Install host tools on the documented RHEL-family setup
+
+The package names below follow the repository's Podman/RHEL runbook. The binary download commands target x86_64, as in that setup; install compatible kind and kubectl binaries if they are not already available:
+
+~~~bash
+sudo dnf install -y python3 python3-pip git sqlite jq curl \
+  lksctp-tools lksctp-tools-devel iproute iptables-nft \
+  gcc gcc-c++ make cmake podman podman-docker
+
+curl -fL --retry 5 -o /tmp/kind \
+  https://github.com/kubernetes-sigs/kind/releases/download/v0.24.0/kind-linux-amd64
+sudo install /tmp/kind /usr/local/bin/kind
+rm -f /tmp/kind
+
+KVER=$(curl -fsSL --retry 5 https://dl.k8s.io/release/stable.txt)
+curl -fL --retry 5 -o /tmp/kubectl \
+  "https://dl.k8s.io/release/\${KVER}/bin/linux/amd64/kubectl"
+sudo install /tmp/kubectl /usr/local/bin/kubectl
+rm -f /tmp/kubectl
+~~~
+
+Erlang/OTP and rebar3 are optional because the charging launcher falls back to Python. For the Erlang implementation, install OTP 25+ and rebar3 using the host's supported package method; package-manager instructions may differ by distribution.
+
+### 1. Build UERANSIM
+
+Run from the repository root. The checkout is ignored by this repository and is not included in a normal ALLO clone.
+
+~~~bash
+git clone https://github.com/aligungr/UERANSIM.git UERANSIM
+cd UERANSIM
+git checkout 4f45e18f80b0684f7d6e29f1fea0f579e9243d68
+git apply ../configs/ueransim/vplmn.patch
+make -j"$(nproc)"
+cd ..
+~~~
+
+### 2. Build the local IMS/exporter image
+
+The Kubernetes manifests reference `ims-node:latest` for Kamailio, RTPEngine, and the telecom exporter. Build it in the rootful Podman image store used by the kind setup:
+
+~~~bash
+sudo podman build -t ims-node:latest -f - . <<'EOF'
+FROM debian:12-slim
+ENV DEBIAN_FRONTEND=noninteractive
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    kamailio kamailio-sqlite-modules kamailio-extra-modules \
+    kamailio-utils-modules kamailio-presence-modules \
+    rtpengine python3 bash iproute2 iptables procps ca-certificates curl \
+    && rm -rf /var/lib/apt/lists/*
+EOF
+~~~
+
+The bootstrap script attempts to preload locally available images into kind. Open5GS is referenced by the manifests as `gradiant/open5gs:2.8.0`; MongoDB is `mongo:8.0`.
+
+### 3. Start the charging service and Kubernetes workloads
+
+On the documented rootful Podman setup, create the bridge network expected by the fixed node address if it does not already exist, then start charging and bootstrap the cluster. `KUBECONFIG` is set explicitly because the guide's cluster was created as root:
+
+~~~bash
+sudo podman network inspect kind >/dev/null 2>&1 || \
+  sudo podman network create kind --subnet 172.19.0.0/16 --gateway 172.19.0.1
+
 bash scripts/run-erlang-charging.sh start
+sudo env KIND_EXPERIMENTAL_PROVIDER=podman KUBECONFIG=/root/.kube/config \
+  bash scripts/start-lab.sh
+~~~
 
-# 2. Bootstrap the full 5G Core, IMS, and monitoring stack on kind
-sudo bash scripts/start-lab.sh
+`start-lab.sh` creates/starts the `open5gs-cluster`, applies the Open5GS, IMS, and monitoring manifests, waits for workloads, and provisions subscriber profiles. It uses the rootful Docker-compatible CLI and the selected `KUBECONFIG`.
 
-# 3. Launch the RAN (dual gNodeBs)
+#### RHEL 10.2 / Podman image-loading note
+
+The supplied RHEL 10.2 runbook reports that `start-lab.sh` can time out waiting for IMS because its `kind load docker-image` attempt does not place the local `ims-node` image in the cluster. If that happens, the runbook's recovery is to export and load an image archive, restart the IMS and exporter deployments, then finish subscriber provisioning. Prepare the archive after building the image above:
+
+~~~bash
+sudo podman tag ims-node:latest docker.io/library/ims-node:latest
+sudo podman save docker.io/library/ims-node:latest -o /tmp/ims-node.tar
+
+sudo env KIND_EXPERIMENTAL_PROVIDER=podman KUBECONFIG=/root/.kube/config \
+  kind load image-archive /tmp/ims-node.tar --name open5gs-cluster
+sudo env KUBECONFIG=/root/.kube/config kubectl -n ims rollout restart deploy
+sudo env KUBECONFIG=/root/.kube/config \
+  kubectl -n monitoring rollout restart deploy/telecom-exporter
+sudo env KUBECONFIG=/root/.kube/config kubectl get pods -A
+sudo env KUBECONFIG=/root/.kube/config bash scripts/add-subscriber.sh all
+~~~
+
+This is a workaround reported for that RHEL/Podman run, not a universal requirement. Once a cluster already exists, do not blindly rerun `start-lab.sh` on the reported setup: the runbook observed Podman/kind cluster detection fail and an attempted duplicate cluster creation. Check `kind get clusters` and pod status first. See [Platform operations runbook](docs/OPERATIONS.md) for the general sequence.
+
+### 4. Start the radio, subscribers, and GUI
+
+~~~bash
 sudo bash scripts/run-gnb.sh all
-
-# 4. Bring up all three UEs with dual PDU sessions
 sudo bash scripts/run-ue.sh all
-
-# 5. Start the Operations Control Center GUI (:8088)
 bash scripts/run-gui.sh start
-```
+~~~
 
----
+The `all` targets start the three configured gNodeBs and UE1/UE2/UE3. Wait for registration and PDU establishment in the UE logs before testing IMS calls.
 
-## Network Endpoints
+### Quick start after prerequisites and image builds
 
-| Service | URL | Protocol |
-| :--- | :--- | :--- |
-| **ALLO - الو GUI** | `http://127.0.0.1:8088` | HTTP |
-| **Erlang Charging API** | `http://127.0.0.1:8085` | HTTP REST |
-| **Grafana** | `http://172.19.0.2:30300` | HTTP |
-| **Prometheus** | `http://172.19.0.2:30090` | HTTP |
-| **Alertmanager** | `http://172.19.0.2:30093` | HTTP |
-| **Home AMF** (N2) | `172.19.0.2:38412` | SCTP |
-| **Visited AMF** (N2) | `172.19.0.2:38413` | SCTP |
-| **UPF** (N3) | `172.19.0.2:2152` | GTP-U / UDP |
-| **UPF** (N4) | `172.19.0.2:8805` | PFCP / UDP |
-| **P-CSCF** (SIP) | `10.46.0.1:5060` | SIP / UDP |
-| **RTPEngine** (NG) | `10.46.0.1:22222` | UDP |
-| **RTPEngine** (Media) | `10.46.0.1:20000–20100` | RTP / UDP |
+For a repeat startup after the host tools, UERANSIM binaries, IMS image, and cluster are ready, use this order:
 
----
+~~~bash
+bash scripts/run-erlang-charging.sh start
+sudo bash scripts/run-gnb.sh all
+sudo bash scripts/run-ue.sh all
+bash scripts/run-gui.sh start
+~~~
 
-## Verification Commands
+Open the Control Center at `http://127.0.0.1:8088`. The GUI and charging service run as the current user; gNodeBs and UEs need root for host networking and TUN namespaces. The cluster itself must already be running. For first-time setup, follow the numbered bootstrap steps above; a real reboot may require starting the Podman kind node and rechecking pods before launching the RAN.
 
-```bash
-# Full regression suite (91 checks across all 11 subsystems)
+### 5. Verify
+
+Read-only health checks:
+
+~~~bash
+curl -fsS http://127.0.0.1:8085/health
+curl -fsS http://127.0.0.1:8088/api/system/health
+sudo env KUBECONFIG=/root/.kube/config kubectl get pods -A
+~~~
+
+Run the full end-to-end suite against an active lab:
+
+~~~bash
 sudo bash scripts/verify-lab.sh
+~~~
 
-# End-to-end SIP/RTP voice call test (domestic + roaming)
-sudo bash scripts/test-ims-call.sh all
+The lab suite exercises live core, RAN, IMS, and service paths; it can generate SIP calls, CDRs, telemetry, and charging activity. Additional subsystem checks are available as `scripts/verify-gui.sh`, `scripts/verify-rating.sh`, `scripts/verify-erlang-charging.sh`, `scripts/verify-observability.sh`, `scripts/verify-alerting.sh`, and `scripts/verify-grafana.sh`. The Erlang EUnit suite is run with `cd services/charging-erlang && rebar3 eunit`.
 
-# Custom call with specific duration
-sudo bash scripts/test-ims-call.sh 1 3 10    # UE1 → UE3, 10 seconds
-sudo bash scripts/test-ims-call.sh 2 1 manual # UE2 → UE1, manual hang-up
+## Endpoints and APIs
 
-# Service assurance KPI measurement
-sudo bash scripts/measure-kpis.sh all
+The following ports are configured by the repository. `172.19.0.2` is the kind node address used by this lab; reachability from the host depends on the Podman network setup.
 
-# Erlang/OTP charging verification (24 checks)
-bash scripts/verify-erlang-charging.sh
+| Service | Endpoint | Purpose |
+| --- | --- | --- |
+| ALLO Control Center | `http://127.0.0.1:8088` | Overview and operations UI |
+| Control Center API | `http://127.0.0.1:8088/api/...` | Aggregated health, subscribers, calls, charging, and topology data |
+| Charging REST API | `http://127.0.0.1:8085` | Health, accounts, tariffs, rating, charging events, and reconciliation |
+| Prometheus | `http://172.19.0.2:30090` | Metrics query and target status |
+| Grafana | `http://172.19.0.2:30300` | Provisioned telecom dashboard |
+| Alertmanager | `http://172.19.0.2:30093` | Alert inspection |
+| Telecom exporter | `http://172.19.0.2:9100/metrics` | Prometheus exposition endpoint |
+| Home / visited AMF N2 | `172.19.0.2:38412` / `172.19.0.2:38413` | NGAP over SCTP |
+| UPF N3 / N4 | `172.19.0.2:2152` / `172.19.0.2:8805` | GTP-U / PFCP over UDP |
+| IMS P-CSCF | `10.46.0.1:5060` | SIP ingress on the IMS data path |
+| RTPEngine | `10.46.0.1:22222` | NG control over UDP; RTP relay ports are configured separately |
 
-# Rating and balance management (23 checks)
-python3 scripts/rating-engine.py reconcile
+### Control Center API surface
 
-# GUI + REST API verification (18 checks)
-bash scripts/verify-gui.sh
+The GUI server exposes these current routes:
 
-# Prometheus and observability (19 checks)
-bash scripts/verify-observability.sh
+- **GET** `/api/overview`, `/api/subscribers`, `/api/calls`
+- **GET** `/api/charging/overview`, `/api/charging/accounts`, `/api/charging/tariffs`, `/api/charging/transactions`, `/api/charging/reconciliation`
+- **GET** `/api/network/topology`, `/api/system/health`, `/api/actions/call-status`
+- **POST** `/api/actions/trigger-call`, `/api/actions/start-call`, `/api/actions/hangup-call`
+- **POST** `/api/actions/topup`, `/api/actions/recharge`, `/api/actions/quote`, `/api/actions/reconcile`, `/api/actions/measure-kpis`
 
-# Grafana dashboard verification (18 checks)
-bash scripts/verify-grafana.sh
+## Repository map and documentation
 
-# Alertmanager rules + fault injection (19 checks)
-bash scripts/verify-alerting.sh
+~~~text
+ALLO/
+├── configs/
+│   ├── charging/              # YAML accounts, rate plans, tariffs
+│   └── ueransim/              # 3 gNodeB configs, UE configs, roaming patch
+├── data/                      # Local SQLite charging DB; generated and git-ignored
+├── docs/
+│   ├── architecture/          # 5G SA / IMS topology and home/visited RAN
+│   ├── charging/              # Rating model, ledger, Erlang API and operations
+│   ├── observability/         # Exporter, metrics, Grafana, Prometheus, alerting
+│   ├── engineering-notes/     # Network and PDU-session troubleshooting
+│   └── OPERATIONS.md          # Deployment and lab runbook
+├── k8s/
+│   ├── ims/                   # Kamailio and RTPEngine manifests
+│   ├── monitoring/            # Exporter, Prometheus, Grafana, Alertmanager
+│   └── *.yaml                 # kind-facing Open5GS core and MongoDB resources
+├── scripts/                   # Bootstrap, launch, call, rating and verification tools
+├── services/
+│   ├── charging-erlang/       # Erlang/OTP charging application and EUnit tests
+│   ├── charging-server.py     # Python charging API fallback
+│   └── telecom-gui/           # Python API server and static frontend
+├── src/charging/              # Python offline rating, balance, database and audit
+└── README.md
+~~~
 
-# Erlang charging CLI examples
-curl -s http://127.0.0.1:8085/v1/accounts/acc-ue3/balance | python3 -m json.tool
-curl -s http://127.0.0.1:8085/v1/reconciliation | python3 -m json.tool
-```
+Further reading:
 
----
+- [Platform operations runbook](docs/OPERATIONS.md)
+- [Documentation index](docs/README.md)
+- [5G SA and IMS architecture](docs/architecture/README.md)
+- [Current home/visited RAN note](docs/architecture/home-vs-visited-ran.md)
+- [IMS call-flow validation](docs/IMS-CALL-FLOW-VALIDATION.md)
+- [IMS Kubernetes manifests](k8s/ims/README.md)
+- [Charging architecture](docs/charging/architecture.md)
+- [Charging rating model and tariff rules](docs/charging/rating-model.md)
+- [Balance lifecycle and transaction journal](docs/charging/balance-management.md)
+- [Erlang charging REST API](docs/charging/erlang-api.md)
+- [Python charging data model](docs/charging/data-model.md)
+- [Charging reconciliation](docs/charging/reconciliation.md)
+- [Observability architecture](docs/observability/observability-architecture.md)
+- [Prometheus deployment](docs/observability/prometheus-deployment.md)
+- [Grafana operations dashboard](docs/observability/grafana-operations-dashboard.md)
+- [Alerting rules and runbooks](docs/observability/alerting.md)
+- [Contribution guide](CONTRIBUTING.md)
+- [Security policy](SECURITY.md)
 
-## Configuration Reference
+## Scope and security
 
-### Subscriber Authentication Keys
-
-| UE | IMSI | K | OPc | AMF |
-| :--- | :--- | :--- | :--- | :--- |
-| UE1 | `602030000000001` | `465B5CE8B199B49FAA5F0A2EE238A6BC` | `E8ED2441347B7990E92C19B0316CD6FC` | `8000` |
-| UE2 | `602040000000002` | `465B5CE8B199B49FAA5F0A2EE238A6BD` | `E8ED2441347B7990E92C19B0316CD6FC` | `8000` |
-| UE3 | `602030000000003` | `465B5CE8B199B49FAA5F0A2EE238A6BE` | `E8ED2441347B7990E92C19B0316CD6FC` | `8000` |
-
-### IP Address Plan
-
-| Network | Subnet | Gateway | Purpose |
-| :--- | :--- | :--- | :--- |
-| Kind bridge | `172.19.0.0/16` | `172.19.0.1` | Host ↔ cluster connectivity |
-| Internet DNN | `10.45.0.0/16` | `10.45.0.1` | UE internet data path |
-| IMS DNN | `10.46.0.0/16` | `10.46.0.1` | UE IMS signaling + voice bearer |
-
-### Configuration Files
-
-| Category | Path | Description |
-| :--- | :--- | :--- |
-| 5G Core NFs | [`k8s/configmap.yaml`](k8s/configmap.yaml) | AMF, V-AMF, SMF, V-SMF, UPF, NRF, UDR, UDM, AUSF, PCF, BSF configs |
-| IMS | [`k8s/ims/configmap.yaml`](k8s/ims/configmap.yaml) | P-CSCF, I-CSCF, S-CSCF Kamailio configs + init-db.py |
-| gNodeB Home | [`configs/ueransim/open5gs-gnb-home.yaml`](configs/ueransim/open5gs-gnb-home.yaml) | PLMNs 602/03 + 602/04, SCTP → `:38412` |
-| gNodeB Visited | [`configs/ueransim/open5gs-gnb-visited.yaml`](configs/ueransim/open5gs-gnb-visited.yaml) | PLMN 218/90, SCTP → `:38413` |
-| UE1 | [`configs/ueransim/open5gs-ue1.yaml`](configs/ueransim/open5gs-ue1.yaml) | Home 602/03, dual PDU |
-| UE2 | [`configs/ueransim/open5gs-ue2.yaml`](configs/ueransim/open5gs-ue2.yaml) | Home 602/04, dual PDU |
-| UE3 | [`configs/ueransim/open5gs-ue3.yaml`](configs/ueransim/open5gs-ue3.yaml) | Home 602/03, roaming via gNodeB-Visited |
-| Tariffs | [`configs/charging/tariffs.yaml`](configs/charging/tariffs.yaml) | Voice and data rating rules |
-| Rate Plans | [`configs/charging/rate-plans.yaml`](configs/charging/rate-plans.yaml) | `standard-prepaid`, `premium-roaming` |
-| Accounts | [`configs/charging/accounts.yaml`](configs/charging/accounts.yaml) | Subscriber prepaid balances |
-
----
-
-## Documentation
-
-Detailed technical documentation is organized under [`docs/`](docs/):
-
-| Area | Documents |
-| :--- | :--- |
-| **Architecture** | [5G SA SBA Architecture](docs/architecture/README.md) · [Home vs Visited RAN](docs/architecture/home-vs-visited-ran.md) |
-| **IMS** | [IMS Call Flow Validation](docs/IMS-CALL-FLOW-VALIDATION.md) |
-| **Charging** | [Architecture](docs/charging/architecture.md) · [Rating Model](docs/charging/rating-model.md) · [Balance Management](docs/charging/balance-management.md) · [Reconciliation](docs/charging/reconciliation.md) · [Erlang/OTP Architecture](docs/charging/erlang-otp-architecture.md) · [Erlang REST API](docs/charging/erlang-api.md) · [Operations CLI](docs/charging/operations.md) · [Testing](docs/charging/testing.md) · [Erlang Testing](docs/charging/erlang-testing.md) · [Data Model](docs/charging/data-model.md) |
-| **Observability** | [Architecture](docs/observability/observability-architecture.md) · [Metrics Model](docs/observability/metrics-model.md) · [Metrics Source Map](docs/observability/metrics-source-map.md) · [Prometheus Deployment](docs/observability/prometheus-deployment.md) · [Grafana Dashboard](docs/observability/grafana-operations-dashboard.md) · [Alerting](docs/observability/alerting.md) |
-| **Engineering Notes** | [Linux Networking Behind 5G](docs/engineering-notes/linux-networking-behind-5g.md) · [Debugging PDU Sessions](docs/engineering-notes/debugging-pdu-session.md) · [QoS, Charging & Assurance](docs/engineering-notes/phase4-qos-charging-assurance.md) |
-
----
-
-## License
-
-Distributed under the **MIT License** — see [`LICENSE`](LICENSE) for details.
-
-Copyright © 2026 Abdulrahman Khattab.
-
----
-
-## Built With
-
-| Project | Role in ALLO - الو |
-| :--- | :--- |
-| [Open5GS](https://open5gs.org/) | 3GPP Release 16 5G SA Core (AMF, SMF, UPF, NRF, UDM, UDR, AUSF, PCF, BSF) |
-| [UERANSIM](https://github.com/aligungr/UERANSIM) | 5G RAN simulator (gNodeB + UE with multi-PLMN and network namespace support) |
-| [Kamailio](https://www.kamailio.org/) | IMS SIP signaling (P-CSCF, I-CSCF, S-CSCF with Digest MD5 authentication) |
-| [RTPEngine](https://github.com/sipwise/rtpengine) | Media proxy (SDP rewriting, G.711 PCMU bidirectional relay) |
-| [Erlang/OTP](https://www.erlang.org/) | Telecom charging engine (gen_server, Cowboy REST, OTP supervision) |
-| [Prometheus](https://prometheus.io/) | Metrics collection and alerting (5-second scrape, 26 alert rules) |
-| [Grafana](https://grafana.com/) | Operations dashboard (53+ panels across 8 sections) |
-| [kind](https://kind.sigs.k8s.io/) | Local Kubernetes cluster for the entire 5G Core and IMS stack |
-| [MongoDB](https://www.mongodb.com/) | 3GPP subscriber data store (UDR backend) |
+- ALLO is a simulated lab: UERANSIM is not physical radio hardware, and the platform does not implement a complete operator roaming security boundary.
+- The checked-in manifests use lab credentials and configure Grafana anonymous access with the `Admin` role. The Control Center has no independent authentication or role system, and its server defaults to listening on `0.0.0.0`.
+- Keep management ports on a trusted lab network. Review and replace demo credentials and access settings before exposing any service beyond that environment.

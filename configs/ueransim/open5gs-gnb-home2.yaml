@@ -1,0 +1,17 @@
+# UERANSIM gNodeB Configuration for Egypt Home Network (HPLMN 602/03, 602/04)
+# Open Telecom Lab — Isolated Home RAN
+mcc: '602'
+mnc: '04'
+nci: '0x000000020'
+idLength: 32
+tac: 1
+linkIp: 127.0.0.3
+ngapIp: 172.19.0.1
+gtpIp: 172.19.0.4
+amfConfigs:
+  - address: 172.19.0.2
+    port: 38412
+slices:
+  - sst: 1
+    sd: 0xffffff
+ignoreStreamIds: true

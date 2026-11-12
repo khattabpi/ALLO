@@ -1,0 +1,56 @@
+diff --git a/src/ue.cpp b/src/ue.cpp
+index d48e72d7..d94ac35c 100644
+--- a/src/ue.cpp
++++ b/src/ue.cpp
+@@ -109,6 +109,14 @@ static nr::ue::UeConfig *ReadConfigYaml()
+     yaml::GetString(config, "mcc", 3, 3);
+     result->hplmn.mnc = yaml::GetInt32(config, "mnc", 0, 999);
+     result->hplmn.isLongMnc = yaml::GetString(config, "mnc", 2, 3).size() == 3;
++    if (config["vplmn"])
++    {
++        Plmn v{};
++        v.mcc = yaml::GetInt32(config["vplmn"], "mcc", 1, 999);
++        v.mnc = yaml::GetInt32(config["vplmn"], "mnc", 0, 999);
++        v.isLongMnc = yaml::GetString(config["vplmn"], "mnc", 2, 3).size() == 3;
++        result->vplmn = v;
++    }
+     if (yaml::HasField(config, "routingIndicator"))
+         result->routingIndicator = yaml::GetString(config, "routingIndicator", 1, 4);
+ 
+@@ -391,6 +399,7 @@ static nr::ue::UeConfig *GetConfigByUe(int ueIndex)
+     c->useNamespace = g_refConfig->useNamespace;
+     c->nsNamePrefix = g_refConfig->nsNamePrefix;
+     c->hplmn = g_refConfig->hplmn;
++    c->vplmn = g_refConfig->vplmn;
+     c->configuredNssai = g_refConfig->configuredNssai;
+     c->defaultConfiguredNssai = g_refConfig->defaultConfiguredNssai;
+     c->supportedAlgs = g_refConfig->supportedAlgs;
+diff --git a/src/ue/nas/mm/radio.cpp b/src/ue/nas/mm/radio.cpp
+index 3d0491eb..ba59c917 100644
+--- a/src/ue/nas/mm/radio.cpp
++++ b/src/ue/nas/mm/radio.cpp
+@@ -80,6 +80,12 @@ void NasMm::performPlmnSelection()
+         if (plmn == m_base->config->hplmn)
+             candidates.push_back(plmn);
+ 
++    // Configured visited PLMN (roaming lab extension)
++    if (m_base->config->vplmn.has_value())
++        for (auto &plmn : plmns)
++            if (plmn == *m_base->config->vplmn)
++                candidates.push_back(plmn);
++
+     // Then again look for the all PLMNS
+     for (auto &plmn : plmns)
+     {
+diff --git a/src/ue/types.hpp b/src/ue/types.hpp
+index bae2d841..c8b97fff 100644
+--- a/src/ue/types.hpp
++++ b/src/ue/types.hpp
+@@ -98,6 +98,7 @@ struct UeConfig
+     OctetString homeNetworkPublicKey{};
+     std::optional<std::string> routingIndicator{};
+     Plmn hplmn{};
++    std::optional<Plmn> vplmn{};
+     OctetString key{};
+     OctetString opC{};
+     OpType opType{};

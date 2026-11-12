@@ -27,11 +27,14 @@ GNB_HOME_CONFIG="${REPO_ROOT}/configs/ueransim/open5gs-gnb-home.yaml"
 GNB_VISITED_CONFIG="${REPO_ROOT}/configs/ueransim/open5gs-gnb-visited.yaml"
 [ ! -f "${GNB_VISITED_CONFIG}" ] && GNB_VISITED_CONFIG="${REPO_ROOT}/configs/ueransim/gnb-visited.yaml"
 
+GNB_HOME2_CONFIG="${REPO_ROOT}/configs/ueransim/open5gs-gnb-home2.yaml"
+
 GNB_BIN="${REPO_ROOT}/UERANSIM/build/nr-gnb"
 [ ! -x "${GNB_BIN}" ] && [ -x "/home/abdulrhamn/core/UERANSIM/build/nr-gnb" ] && GNB_BIN="/home/abdulrhamn/core/UERANSIM/build/nr-gnb"
 
 LOG_HOME="/tmp/ueransim-gnb-home.log"
 LOG_VISITED="/tmp/ueransim-gnb-visited.log"
+LOG_HOME2="/tmp/ueransim-gnb-home2.log"
 
 if [ ! -x "${GNB_BIN}" ]; then
     echo "[-] Error: nr-gnb binary not found at ${GNB_BIN}" >&2
@@ -44,6 +47,9 @@ ensure_bridge_ips() {
     if [ -n "${bridge_dev}" ]; then
         if ! ip -4 addr show dev "${bridge_dev}" | grep -q "172.19.0.3"; then
             ip addr add 172.19.0.3/16 dev "${bridge_dev}" 2>/dev/null || true
+        fi
+        if ! ip -4 addr show dev "${bridge_dev}" | grep -q "172.19.0.4"; then
+          ip addr add 172.19.0.4/16 dev "${bridge_dev}" 2>/dev/null || true
         fi
     fi
 }
@@ -58,6 +64,10 @@ stop_gnb() {
         visited)
             echo "[+] Stopping gNodeB-Visited..."
             pkill -9 -f 'nr-gnb.*(open5gs-gnb-visited|gnb-visited)\.yaml' 2>/dev/null || true
+            ;;
+        home2)
+            echo "[+] Stopping gNodeB-Home2..."
+            pkill -9 -f 'nr-gnb.*open5gs-gnb-home2\.yaml' 2>/dev/null || true
             ;;
         all|"")
             echo "[+] Stopping all nr-gnb instances..."
@@ -102,6 +112,11 @@ case "${ACTION}" in
         start_single_gnb "gNodeB-Home (PLMN 602/03, 602/04 -> HAMF :38412)" "${GNB_HOME_CONFIG}" "${LOG_HOME}"
         ln -sf "${LOG_HOME}" /tmp/ueransim-gnb.log 2>/dev/null || true
         ;;
+    home2)
+        stop_gnb home2
+        ensure_bridge_ips
+        start_single_gnb "gNodeB-Home2 (PLMN 602/04 -> HAMF :38412)" "${GNB_HOME2_CONFIG}" "${LOG_HOME2}"
+        ;;
     visited)
         stop_gnb visited
         ensure_bridge_ips
@@ -112,12 +127,13 @@ case "${ACTION}" in
         ensure_bridge_ips
         start_single_gnb "gNodeB-Home (PLMN 602/03, 602/04 -> HAMF :38412)" "${GNB_HOME_CONFIG}" "${LOG_HOME}"
         ln -sf "${LOG_HOME}" /tmp/ueransim-gnb.log 2>/dev/null || true
+        start_single_gnb "gNodeB-Home2 (PLMN 602/04 -> HAMF :38412)" "${GNB_HOME2_CONFIG}" "${LOG_HOME2}"
         start_single_gnb "gNodeB-Visited (PLMN 218/90 -> VAMF :38413)" "${GNB_VISITED_CONFIG}" "${LOG_VISITED}"
         echo "─────────────────────────────────────────────────────────────────"
-        echo "[✓] Both gNodeB-Home and gNodeB-Visited are active and isolated."
+        echo "[✓] gNodeB-Home, gNodeB-Home2 and gNodeB-Visited are active and isolated."
         ;;
     *)
-        echo "[-] Usage: bash scripts/run-gnb.sh [all|home|visited|stop [home|visited]]" >&2
+        echo "[-] Usage: bash scripts/run-gnb.sh [all|home|home2|visited|stop [home|home2|visited]]" >&2
         exit 1
         ;;
 esac

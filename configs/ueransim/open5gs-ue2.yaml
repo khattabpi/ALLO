@@ -39,7 +39,7 @@ nsNamePrefix: 'ueransim'
 
 # ─── RAN Connection ────────────────────────────────────────────
 gnbSearchList:
-  - 127.0.0.1
+  - 127.0.0.3
 
 # ─── UAC Configuration ─────────────────────────────────────────
 uacAic:

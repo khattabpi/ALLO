@@ -55,6 +55,9 @@ ensure_bridge_ips() {
     if ! ip -4 addr show dev "${bridge_dev}" | grep -q "172.19.0.3"; then
       ${SUDO} ip addr add 172.19.0.3/16 dev "${bridge_dev}" 2>/dev/null || true
     fi
+    if ! ip -4 addr show dev "${bridge_dev}" | grep -q "172.19.0.4"; then
+      ${SUDO} ip addr add 172.19.0.4/16 dev "${bridge_dev}" 2>/dev/null || true
+    fi
   fi
 }
 
