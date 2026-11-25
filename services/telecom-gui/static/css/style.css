@@ -157,17 +157,17 @@
 
 [data-theme="dark"] {
   /* ---- Canvas & Surfaces ---- */
-  --bg-canvas: #0B1120;
-  --bg-surface: #131C2E;
+  --bg-canvas: #0b1c36;
+  --bg-surface: #0C213E;
   --bg-surface-subtle: #0F172A;
   --bg-surface-hover: #1A2540;
   --bg-surface-active: #1E2D4A;
 
   /* ---- Borders ---- */
-  --border-subtle: #1E293B;
+  --border-subtle: rgba(56, 189, 248, 0.22);                                              
   --border-medium: #2A3A52;
   --border-strong: #3E5068;
-  --border-focus: #0EA5E9;
+  --border-focus: #245469;
 
   /* ---- Typography ---- */
   --text-primary: #E8EDF4;
@@ -244,13 +244,14 @@
 
 /* Dark mode header & sidebar adjustments */
 [data-theme="dark"] .top-header {
-  background: #0B1120;
-  border-bottom-color: #1E293B;
+  background: rgba(22, 32, 50, 0.9);
+  backdrop-filter: blur(12px);
+  border-bottom-color: #334155;
 }
 
 [data-theme="dark"] .sidebar {
-  background: #0F172A;
-  border-right-color: #1E293B;
+  background:linear-gradient(180deg, #07152B 0%, #0B1F3F 100%);
+  border-right-color: #334155;
 }
 
 [data-theme="dark"] .nav-tab.active {
@@ -342,8 +343,9 @@
 }
 
 [data-theme="dark"] .sub-balance-box {
-  background: #0F172A;
+  background: linear-gradient(180deg, #162033 0%, #111827 100%);
   border-color: #1E293B;
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
 }
 
 [data-theme="dark"] .slice-badge {
@@ -439,15 +441,16 @@
 
 /* --- 2. Top Header Bar & Brand --- */
 [data-theme="dark"] .top-header-bar {
-  background: #0B1120;
+  background: linear-gradient(180deg, #07152B 0%, #0B1F3F 100%);
   border-bottom-color: #1E293B;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 [data-theme="dark"] .header-status-pill {
-  background: #0F172A;
+  background: rgba(11, 17, 32, 0.85);
+  backdrop-filter: blur(12px);
   border-color: #1E293B;
-  color: #C2D0E0;
+  color: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 [data-theme="dark"] .header-status-pill:hover {
   background: #1A2540;
@@ -521,7 +524,9 @@
 }
 
 /* --- 7. Cards, Card Headers, Panel Headers --- */
-[data-theme="dark"] .card { background: #131C2E; border-color: #1E293B; }
+[data-theme="dark"] .card { background: linear-gradient(180deg, rgba(16, 42, 78, 0.85) 0%, rgba(10, 27, 54, 0.92) 100%);
+border: 1px solid rgba(56, 189, 248, 0.25);
+box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.12), 0 8px 24px rgba(2, 8, 20, 0.4);}
 [data-theme="dark"] .card:hover { border-color: #2A3A52; }
 [data-theme="dark"] .card-header { background: #131C2E; border-bottom-color: #1E293B; }
 [data-theme="dark"] .card-header h3,
@@ -556,6 +561,7 @@
 [data-theme="dark"] .hud-timer,
 [data-theme="dark"] .matrix-dir {
   color: #F8FAFC;
+  text-shadow:  0 0 20px rgba(56,189,248,0.2);
 }
 [data-theme="dark"] .kpi-metric-sub { color: #5A7499; }
 
@@ -777,23 +783,26 @@ code, kbd, samp, pre {
 }
 
 .allo-brand-logo-img {
-  width: 40px;
+ display: block;
+  flex-shrink: 0;
+  width: 78px;
   height: 40px;
-  border-radius: 50%;
+  border-radius: 8px;
   object-fit: cover;
-  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.22), 0 0 0 1.5px rgba(14, 165, 233, 0.3);
-  position: relative;
-  z-index: 1;
-  transition: box-shadow 0.3s ease;
+  /* تظبيط الحواف عشان الزوايا البيضاء تتقص بنعومة */
+  border: 1.5px solid rgba(14, 165, 233, 0.35);
+  box-shadow: 0 2px 8px rgba(2, 132, 199, 0.25);
+  clip-path: inset(3px 3px 3px 3px round 10px);
 }
 
 .brand-logo-container:hover .allo-brand-logo-img {
-  box-shadow: 0 4px 14px rgba(2, 132, 199, 0.32), 0 0 0 2.5px rgba(14, 165, 233, 0.45), 0 0 18px rgba(14, 165, 233, 0.15);
+  transform: scale(1.03);
+  box-shadow: 0 4px 14px rgba(14, 165, 233, 0.4);
 }
 
 /* Subtle rotating glow ring around logo */
 .brand-logo-container {
-  position: relative;
+ display: flex;
 }
 
 .brand-logo-container::before {
@@ -819,6 +828,7 @@ code, kbd, samp, pre {
   pointer-events: none;
   opacity: 0.7;
   transition: opacity 0.3s ease;
+  display: none;
 }
 
 .brand-logo-container:hover::before {
@@ -833,6 +843,46 @@ code, kbd, samp, pre {
 @keyframes logoRingSpin {
   from { transform: rotate(0deg); }
   to { transform: rotate(360deg); }
+}
+/* show the icon (Lightbox) */
+.logo-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(6, 13, 26, 0.82);
+  backdrop-filter: blur(6px);
+  align-items: center;
+  justify-content: center;
+  cursor: zoom-out;
+}
+
+.logo-modal.show {
+  display: flex;
+  animation: modalFadeIn 0.2s ease-out;
+}
+
+.logo-modal-content {
+  max-width: 420px;
+  width: 85%;
+  border-radius: 18px;
+  clip-path: inset(12px round 28px)!important; 
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6), 0 0 25px rgba(56, 189, 248, 0.35);
+  transform: scale(0.92);
+  animation: logoZoomIn 0.22s ease-out forwards;
+}
+
+.allo-brand-logo-img {
+  cursor: zoom-in;
+}
+
+@keyframes modalFadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes logoZoomIn {
+  to { transform: scale(1); }
 }
 
 
@@ -1295,10 +1345,10 @@ body.sidebar-collapsed .sidebar {
 }
 
 .nav-tab.active {
-  background: linear-gradient(135deg, var(--blue-50) 0%, #E0F2FE 100%);
-  color: var(--blue-700);
+  background: linear-gradient(90deg, #1D70D8 0%, #1558B0 100%);
+  color: #FFFFFF;
   font-weight: 600;
-  box-shadow: inset 0 0 0 1px rgba(2, 132, 199, 0.2);
+  box-shadow: 0 4px 12px rgba(29, 112, 216, 0.4);
 }
 
 .nav-tab.active::before {
@@ -1310,6 +1360,7 @@ body.sidebar-collapsed .sidebar {
   width: 3px;
   background: linear-gradient(180deg, var(--blue-500) 0%, var(--cyan-500) 100%);
   border-radius: 0 3px 3px 0;
+  display: none;
 }
 
 .nav-icon {
@@ -1330,6 +1381,15 @@ body.sidebar-collapsed .sidebar {
 .nav-tab.active .nav-icon {
   opacity: 1;
   filter: none;
+}
+[data-theme="dark"] .nav-icon {
+  filter: brightness(0) invert(1);
+  opacity: 0.7;
+}
+[data-theme="dark"] .nav-tab:hover .nav-icon,
+[data-theme="dark"] .nav-tab.active .nav-icon {
+  filter: brightness(0) invert(1);
+  opacity: 1;
 }
 
 .nav-tab-label {
@@ -1811,11 +1871,14 @@ body.sidebar-collapsed .main-wrapper {
   background: var(--bg-surface);
   border: 1px solid var(--border-subtle);
   border-radius: var(--radius-lg);
-  padding: 1.15rem 1.25rem;
   box-shadow: var(--shadow-xs);
   position: relative;
   overflow: hidden;
+  display: flex; align-items:flex-start; gap: 0.7rem;
   transition: transform 0.18s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.18s ease;
+  padding: 0.85rem 1rem ; 
+
+ 
 }
 
 .kpi-card-metric:hover {
@@ -1831,6 +1894,7 @@ body.sidebar-collapsed .main-wrapper {
   left: 0;
   right: 0;
   height: 3px;
+  display: none;
 }
 
 /* Card 1: Consumed Revenue (Cyan/Teal Accent) */
@@ -1854,16 +1918,16 @@ body.sidebar-collapsed .main-wrapper {
 }
 
 .kpi-metric-title {
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   text-transform: uppercase;
-  letter-spacing: 0.6px;
+  letter-spacing: 0.3px;
   color: var(--navy-400);
   margin-bottom: 0.4rem;
 }
 
 .kpi-metric-val {
-  font-size: 1.65rem;
+  font-size: 1.35rem;
   font-weight: 800;
   color: var(--navy-900);
   font-family: var(--font-sans);
@@ -1876,7 +1940,75 @@ body.sidebar-collapsed .main-wrapper {
   color: var(--navy-500);
   margin-top: 0.35rem;
   font-weight: 500;
+  padding-right: 52px;
 }
+
+.kpi-icon-box {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0; 
+}
+.kpi-sparkline {
+  position:absolute;
+  right: 0;
+  bottom:0;
+  width: 120px;
+  height: 50px;
+  pointer-events: none;
+  flex-shrink: 0; 
+  align-self: flex-end; 
+  filter: drop-shadow(0 2px 4px currentColor);
+  animation: sparkShimmer 3.5s ease-in-out infinite;
+}
+.kpi-text-content {
+  flex: 1;
+  min-width: 0;
+}
+
+@keyframes sparkShimmer {
+  0%, 100% {
+    opacity: 0.72;
+    filter: drop-shadow(0 0 2px currentColor);
+  }
+  50% {
+    opacity: 1;
+    filter: drop-shadow(0 0 8px currentColor);
+  }
+}
+
+
+
+
+.kpi-card-metric:nth-child(1) .kpi-sparkline { color: #FB7185; animation-delay: 0s; }
+.kpi-card-metric:nth-child(2) .kpi-sparkline { color: #38BDF8; animation-delay: 0.6s; }
+.kpi-card-metric:nth-child(3) .kpi-sparkline { color: #22D3EE; animation-delay: 1.2s; }
+.kpi-card-metric:nth-child(4) .kpi-sparkline { color: #A78BFA; animation-delay: 1.8s; }
+
+
+.icon-rose   { background: #FECDD3; color: #BE123C; } 
+.icon-blue   { background: #BAE6FD; color: #0369A1; }
+.badge-5g-icon {
+  font-size: 0.95rem;
+  font-weight: 950;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  width: 38px;
+  height: 38px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  letter-spacing: -0.5px;
+}
+.icon-cyan   { background: #A5F3FC; color: #0E7490; } 
+.icon-purple { background: #DDD6FE; color: #5B21B6; }
+[data-theme="dark"] .icon-rose   { background: rgba(244, 63, 94, 0.18); color: #FB7185; }
+[data-theme="dark"] .icon-blue   { background: rgba(14, 165, 233, 0.18); color: #38BDF8; }
+[data-theme="dark"] .icon-cyan   { background: rgba(6, 182, 212, 0.18); color: #22D3EE; }
+[data-theme="dark"] .icon-purple { background: rgba(139, 92, 246, 0.18); color: #A78BFA; }
 
 /* Compatibility classes */
 .card-red, .card-blue, .card-cyan, .card-teal {
@@ -2049,6 +2181,92 @@ body.sidebar-collapsed .main-wrapper {
 @keyframes chartPulseRing {
   0% { r: 4.5px; opacity: 0.9; }
   100% { r: 12px; opacity: 0; }
+}
+/* Chart of Recorded IMS Calls & Matched Revenue*/
+.chart-container {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.chart-legend {
+  display: flex;
+  gap: 16px;
+  font-size: 0.8rem;
+  color: var(--text-secondary);
+  padding-left: 35px;
+}
+
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.blue-dot { background-color: #22D3EE; }
+.purple-dot { background-color: #FB7185; }
+
+.chart-wrapper {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  height: 170px;
+}
+
+.y-axis {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  padding-bottom: 22px; 
+}
+
+.svg-area {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.wave-svg {
+  width: 100%;
+  height: 145px;
+  border-left: 1px solid rgba(148, 163, 184, 0.2);
+  border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+  overflow: visible;
+}
+
+.x-axis {
+  display: flex;
+  justify-content: space-between;
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  padding-top: 8px;
+}
+
+
+.line-calls, .line-revenue {
+  stroke-dasharray: 800;
+  stroke-dashoffset: 800;
+  animation: drawWave 2s ease-out forwards;
+}
+
+.line-revenue {
+  animation-delay: 0.3s;
+}
+
+@keyframes drawWave {
+  to {
+    stroke-dashoffset: 0;
+  }
 }
 
 /* ==========================================================================
@@ -3129,3 +3347,45 @@ body.sidebar-collapsed .sidebar-toggle-btn svg { transform: rotate(180deg); }
   .header-status-pill { padding: 0.25rem 0.4rem; }
   .status-pill-label { font-size: 0.62rem; }
 }
+[data-theme="dark"] .call-chart-measures b,
+[data-theme="dark"] .detail-back-link,
+[data-theme="dark"] .admin-endpoints a {
+  color: #38BDF8;
+}
+/* === ألوان نقط System Status في الـ Dark Mode === */
+/* 1. 5GC NFs -> Blue (أزرق) */
+[data-theme="dark"] .sidebar-status-list .status-row:nth-child(1) .s-dot {
+  background-color: #38BDF8 !important;
+  box-shadow: 0 0 8px rgba(56, 189, 248, 0.6);
+}
+
+/* 2. Subscriber Profiles -> Purple (بنفسجي) */
+[data-theme="dark"] .sidebar-status-list .status-row:nth-child(2) .s-dot {
+  background-color: #A78BFA !important;
+  box-shadow: 0 0 8px rgba(167, 139, 250, 0.6);
+}
+
+/* 3. IMS Voice -> Cyan (لبني) */
+[data-theme="dark"] .sidebar-status-list .status-row:nth-child(3) .s-dot {
+  background-color: #22D3EE !important;
+  box-shadow: 0 0 8px rgba(34, 211, 238, 0.6);
+}
+
+/* 4. Charging -> Rose/Red (أحمر) */
+[data-theme="dark"] .sidebar-status-list .status-row:nth-child(4) .s-dot {
+  background-color: #FB7185 !important;
+  box-shadow: 0 0 8px rgba(251, 113, 133, 0.6);
+}
+
+/* 5. Audit -> Green (أخضر) */
+[data-theme="dark"] .sidebar-status-list .status-row:nth-child(5) .s-dot {
+  background-color: #22C55E !important;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.6);
+}
+
+/* === ألوان نقط System Status في الـ Light Mode (درجات غامقة) === */
+:root:not([data-theme="dark"]) .sidebar-status-list .status-row:nth-child(1) .s-dot { background-color: #0369A1 !important; }
+:root:not([data-theme="dark"]) .sidebar-status-list .status-row:nth-child(2) .s-dot { background-color: #5B21B6 !important; }
+:root:not([data-theme="dark"]) .sidebar-status-list .status-row:nth-child(3) .s-dot { background-color: #0E7490 !important; }
+:root:not([data-theme="dark"]) .sidebar-status-list .status-row:nth-child(4) .s-dot { background-color: #BE123C !important; }
+:root:not([data-theme="dark"]) .sidebar-status-list .status-row:nth-child(5) .s-dot { background-color: #15803D !important; }

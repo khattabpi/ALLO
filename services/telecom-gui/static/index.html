@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,11 @@
   <link rel="stylesheet" href="css/style.css">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600;700;800&display=swap"
+    rel="stylesheet">
 </head>
+
 <body>
 
   <!-- ================================================================= -->
@@ -18,8 +22,10 @@
   <header class="top-header-bar">
     <div class="header-brand-left">
       <!-- Sidebar Collapse / Expand Toggle Button -->
-      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Collapse navigation" aria-label="Collapse navigation" aria-expanded="true" aria-controls="app-sidebar">
-        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <button class="sidebar-toggle-btn" id="sidebar-toggle-btn" title="Collapse navigation"
+        aria-label="Collapse navigation" aria-expanded="true" aria-controls="app-sidebar">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="1.8" fill="none"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
           <rect x="3" y="4" width="18" height="16" rx="3"></rect>
           <path d="M9 4v16"></path>
           <path class="sidebar-toggle-chevron" d="m14 9 3 3-3 3"></path>
@@ -27,11 +33,12 @@
       </button>
 
       <!-- Official ALLO 5G Logo & Brand Badge -->
-      <div class="brand-logo-container" role="button" tabindex="0" onclick="app.switchTab('overview')" title="ALLO 5G Control Center">
-        <img src="images/allo-5g-logo.jpg" alt="ALLO 5G" class="allo-brand-logo-img">
+      <div class="brand-logo-container" role="button" tabindex="0" onclick="app.switchTab('overview')"
+        title="ALLO 5G Control Center">
+        <img src="images/Allo logo.jpg" alt="ALLO 5G" class="allo-brand-logo-img"onclick="openLogoModal(event)" title="Show the icon">
         <div class="brand-text-block">
           <div class="brand-title-row">
-            <span class="brand-allo">allo</span>
+            <span class="brand-allo">Allo</span>
             <span class="brand-5g-tag">5G</span>
           </div>
           <span class="brand-platform-sub">Control Center</span>
@@ -45,9 +52,11 @@
     <div class="header-search-center">
       <div class="header-search-wrapper">
         <svg class="header-search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
-        <input type="text" placeholder="Search subscribers, NFs, tariffs, transactions..." class="header-search-input" id="global-search-input" autocomplete="off">
+        <input type="text" placeholder="Search subscribers, NFs, tariffs, transactions..." class="header-search-input"
+          id="global-search-input" autocomplete="off">
         <div class="search-results-dropdown" id="search-results-dropdown"></div>
       </div>
     </div>
@@ -69,11 +78,21 @@
         <span class="status-pill-label" id="header-ims-status">IMS: checking</span>
       </span>
       <button class="theme-toggle-btn" id="theme-toggle-btn" title="Toggle dark mode">
-        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/>
+        <svg class="icon-moon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
         </svg>
-        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+        <svg class="icon-sun" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="12" cy="12" r="5" />
+          <line x1="12" y1="1" x2="12" y2="3" />
+          <line x1="12" y1="21" x2="12" y2="23" />
+          <line x1="4.22" y1="4.22" x2="5.64" y2="5.64" />
+          <line x1="18.36" y1="18.36" x2="19.78" y2="19.78" />
+          <line x1="1" y1="12" x2="3" y2="12" />
+          <line x1="21" y1="12" x2="23" y2="12" />
+          <line x1="4.22" y1="19.78" x2="5.64" y2="18.36" />
+          <line x1="18.36" y1="5.64" x2="19.78" y2="4.22" />
         </svg>
       </button>
       <div class="header-user-profile">
@@ -183,7 +202,8 @@
       <section id="view-overview" class="view-panel active">
 
         <!-- End-to-End Service Chain Architecture (Focused Top Hero) -->
-        <div class="hero-service-chain-card drilldown-target" data-detail="service-chain" role="button" tabindex="0" aria-label="Open service chain technical details">
+        <div class="hero-service-chain-card drilldown-target" data-detail="service-chain" role="button" tabindex="0"
+          aria-label="Open service chain technical details">
           <div class="service-chain-header">
             <div>
               <h3>End-to-End Service Chain Architecture</h3>
@@ -199,48 +219,213 @@
         <div class="kpi-4-grid">
           <!-- Red Card 1: Consumed Revenue -->
           <div class="kpi-card-metric card-red drilldown-target" data-detail="revenue" role="button" tabindex="0">
-            <div class="kpi-metric-title">Total Consumed Revenue (VoNR+Data)</div>
-            <div class="kpi-metric-val" id="kpi-revenue-consumed">—</div>
-            <div class="kpi-metric-sub" id="kpi-revenue-avail">Awaiting charging data</div>
+            
+            <div class="kpi-icon-box icon-rose">
+              <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-database-zap preview-icon">
+                <ellipse cx="12" cy="5" rx="9" ry="3" />
+                <path d="M3 5V19A9 3 0 0 0 15 21.84" />
+                <path d="M21 5V8" />
+                <path d="M21 12L18 17H22L19 22" />
+                <path d="M3 12A9 3 0 0 0 14.59 14.87" />
+              </svg>
+            </div>
+            <div class="kpi-text-content">
+              <div class="kpi-metric-title">Total Consumed Revenue (VoNR+Data)</div>
+              <div class="kpi-metric-val" id="kpi-revenue-consumed">—</div>
+              <div class="kpi-metric-sub" id="kpi-revenue-avail">Awaiting charging data</div>
+            </div>
+            
+            <svg class="kpi-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-rose" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#FB7185" stop-opacity="0.35" />
+                  <stop offset="100%" stop-color="#FB7185" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M 2 34 C 12 34, 16 24, 26 24 C 36 24, 40 32, 50 32 C 60 32, 65 16, 76 16 C 86 16, 90 25, 100 25 C 108 25, 112 8, 118 8 L 118 40 L 2 40 Z"
+                fill="url(#grad-rose)" />
+              <path
+                d="M 2 34 C 12 34, 16 24, 26 24 C 36 24, 40 32, 50 32 C 60 32, 65 16, 76 16 C 86 16, 90 25, 100 25 C 108 25, 112 8, 118 8"
+                fill="none" stroke="#FB7185" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+
           </div>
 
-          <!-- Red Card 2: Active VoNR Calls -->
+          <!-- cyan Card : Active VoNR Calls -->
           <div class="kpi-card-metric card-red drilldown-target" data-detail="calls" role="button" tabindex="0">
-            <div class="kpi-metric-title">Recorded IMS Calls</div>
-            <div class="kpi-metric-val" id="kpi-active-vonr-calls">—</div>
-            <div class="kpi-metric-sub">Kamailio CDRs currently available</div>
+            
+            <div class="kpi-icon-box icon-cyan">
+              <svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-phone-call preview-icon">
+                <path d="M13 2a9 9 0 0 1 9 9" />
+                <path d="M13 6a5 5 0 0 1 5 5" />
+                <path
+                  d="M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384" />
+              </svg>
+            </div>
+            <div class="kpi-text-content">
+              <div class="kpi-metric-title">Recorded IMS Calls</div>
+              <div class="kpi-metric-val" id="kpi-active-vonr-calls">—</div>
+              <div class="kpi-metric-sub">Kamailio CDRs currently available</div>
+            </div>
+            <svg class="kpi-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-cyan" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#22D3EE" stop-opacity="0.35" />
+                  <stop offset="100%" stop-color="#22D3EE" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M 2 32 C 12 32, 16 26, 26 26 C 36 26, 40 34, 50 34 C 60 34, 65 20, 75 20 C 85 20, 89 28, 98 28 C 106 28, 110 8, 118 8 L 118 40 L 2 40 Z"
+                fill="url(#grad-cyan)" />
+              <path
+                d="M 2 32 C 12 32, 16 26, 26 26 C 36 26, 40 34, 50 34 C 60 34, 65 20, 75 20 C 85 20, 89 28, 98 28 C 106 28, 110 8, 118 8"
+                fill="none" stroke="#22D3EE" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
+
           </div>
 
           <!-- Blue Card 1: 5G SA Core Status -->
           <div class="kpi-card-metric card-blue drilldown-target" data-detail="core" role="button" tabindex="0">
-            <div class="kpi-metric-title">5G SA Core Status</div>
-            <div class="kpi-metric-val" id="kpi-5gc-status">—/— NFs</div>
-            <div class="kpi-metric-sub" id="kpi-5gc-sub">Home (602/03) &amp; Visited (218/90)</div>
+            <div class="kpi-icon-box icon-blue">
+              <span class="badge-5g-icon">5G</span>
+
+            </div>
+            <div class="kpi-text-content">
+              <div class="kpi-metric-title">5G SA Core Status</div>
+              <div class="kpi-metric-val" id="kpi-5gc-status">—/— NFs</div>
+              <div class="kpi-metric-sub" id="kpi-5gc-sub">Home (602/03) &amp; Visited (218/90)</div>
+            </div>
+            <svg class="kpi-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-blue" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#38BDF8" stop-opacity="0.35" />
+                  <stop offset="100%" stop-color="#38BDF8" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M 2 32 C 10 32, 14 20, 22 20 C 30 20, 34 30, 42 30 C 50 30, 54 14, 62 14 C 70 14, 74 26, 82 26 C 90 26, 94 10, 102 10 C 108 10, 112 18, 118 8 L 118 40 L 2 40 Z"
+                fill="url(#grad-blue)" />
+              <path
+                d="M 2 32 C 10 32, 14 20, 22 20 C 30 20, 34 30, 42 30 C 50 30, 54 14, 62 14 C 70 14, 74 26, 82 26 C 90 26, 94 10, 102 10 C 108 10, 112 18, 118 8"
+                fill="none" stroke="#38BDF8" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
           </div>
 
-          <!-- Blue Card 2: Subscriber Profiles -->
+          <!-- Purple Card : Subscriber Profiles -->
+
           <div class="kpi-card-metric card-blue drilldown-target" data-detail="subscribers" role="button" tabindex="0">
-            <div class="kpi-metric-title">Subscriber Profiles</div>
-            <div class="kpi-metric-val" id="kpi-ues-count">— Profiles</div>
-            <div class="kpi-metric-sub">Records returned by subscriber API</div>
+            <div class="kpi-icon-box icon-purple">
+              <svg xmlns="http://www.w3.org/2000/svg" width="40" height="40" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"
+                class="lucide lucide-user preview-icon">
+                <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2" />
+                <circle cx="12" cy="7" r="4" />
+              </svg>
+            </div>
+            <div class="kpi-text-content">
+              <div class="kpi-metric-title">Subscriber Profiles</div>
+              <div class="kpi-metric-val" id="kpi-ues-count">— Profiles</div>
+              <div class="kpi-metric-sub">Records returned by subscriber API</div>
+            </div>
+            <svg class="kpi-sparkline" viewBox="0 0 120 40" preserveAspectRatio="none">
+              <defs>
+                <linearGradient id="grad-purple" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stop-color="#A78BFA" stop-opacity="0.35" />
+                  <stop offset="100%" stop-color="#A78BFA" stop-opacity="0" />
+                </linearGradient>
+              </defs>
+              <path
+                d="M 2 35 C 12 35, 16 22, 26 22 C 36 22, 40 31, 50 31 C 60 31, 66 15, 76 15 C 86 15, 90 24, 100 24 C 108 24, 112 9, 118 9 L 118 40 L 2 40 Z"
+                fill="url(#grad-purple)" />
+              <path
+                d="M 2 35 C 12 35, 16 22, 26 22 C 36 22, 40 31, 50 31 C 60 31, 66 15, 76 15 C 86 15, 90 24, 100 24 C 108 24, 112 9, 118 9"
+                fill="none" stroke="#A78BFA" stroke-width="2.2" stroke-linecap="round" />
+            </svg>
           </div>
         </div>
 
         <!-- Primary Operational Grid: Call Traffic vs Revenue & Network Functions -->
         <div class="bottom-2col-grid">
           <!-- Left: Call Traffic vs Revenue (High Focus Dual-Line Chart) -->
-          <div class="card drilldown-target" data-detail="chart" role="button" tabindex="0" aria-label="Open call traffic and matched revenue analysis">
+          <div class="card drilldown-target" data-detail="chart" role="button" tabindex="0"
+            aria-label="Open call traffic and matched revenue analysis">
             <div class="card-header">
               <div class="header-left">
                 <h3>Recorded IMS Calls &amp; Matched Revenue</h3>
                 <span class="badge badge-voice" style="margin-left: 0.5rem;">From CDRs and ledger</span>
               </div>
-              <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); app.switchTab('calls')">View Call Logs</button>
+              <button class="btn btn-sm btn-secondary" onclick="event.stopPropagation(); app.switchTab('calls')">View
+                Call Logs</button>
             </div>
+            
             <div class="card-body">
-              <div class="chart-container" id="overview-chart-wrapper" aria-live="polite"><p class="chart-empty-state">Loading recorded call and charging data…</p></div>
+              <div class="chart-container" id="overview-chart-wrapper" aria-live="polite">
+                <p class="chart-empty-state">Loading recorded call and charging data…</p>
+
+              </div>
+              <div class="chart-container">
+  <!-- مفتاح الرسم البياني (Legend) -->
+  <div class="chart-legend">
+    <span class="legend-item"><i class="dot blue-dot"></i> Calls</span>
+    <span class="legend-item"><i class="dot purple-dot"></i> Revenue (LAB)</span>
+  </div>
+
+  <!-- منطقة الرسم البياني -->
+  <div class="chart-wrapper">
+    <!-- أرقام المحور الرأسي (Y-Axis) -->
+    <div class="y-axis">
+      <span>6K</span>
+      <span>4K</span>
+      <span>2K</span>
+      <span>0</span>
+    </div>
+
+    <!-- خطوط الموجة SVG -->
+    <div class="svg-area">
+      <svg viewBox="0 0 600 160" preserveAspectRatio="none" class="wave-svg">
+        <!-- تدرج لوني خفيف تحت الخط الأزرق -->
+        <defs>
+          <linearGradient id="blueGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#38bdf8" stop-opacity="0.25"/>
+            <stop offset="100%" stop-color="#38bdf8" stop-opacity="0"/>
+          </linearGradient>
+        </defs>
+
+        <!-- الظل المتدرج تحت خط الـ Calls -->
+        <path d="M0,100 C50,80 100,110 150,90 C200,70 250,40 300,75 C350,110 400,60 450,80 C500,95 550,50 600,65 L600,160 L0,160 Z" 
+              fill="url(#blueGrad)" />
+
+        <!-- الخط الأزرق السماوي (Calls) -->
+        <path class="line-calls" 
+              d="M0,100 C50,80 100,110 150,90 C200,70 250,40 300,75 C350,110 400,60 450,80 C500,95 550,50 600,65" 
+              fill="none" stroke="#22D3EE" stroke-width="2.5" stroke-linecap="round" />
+
+        <!-- الخط البنفسجي (Revenue) -->
+        <path class="line-revenue" 
+              d="M0,135 C60,145 110,120 170,130 C230,140 280,105 340,115 C400,125 460,145 520,120 C560,105 580,115 600,110" 
+              fill="none" stroke="#FB7185" stroke-width="2.5" stroke-linecap="round" />
+      </svg>
+
+      <!-- أوقات المحور الأفقي (X-Axis) -->
+      <div class="x-axis">
+        <span>12AM</span>
+        <span>4AM</span>
+        <span>8AM</span>
+        <span>12PM</span>
+        <span>4PM</span>
+        <span>8PM</span>
+      </div>
+    </div>
+  </div>
+</div>
             </div>
           </div>
+          
 
           <!-- Right: Prometheus-reported 5GC functions -->
           <div class="card drilldown-target" data-detail="network-functions" role="button" tabindex="0">
@@ -284,27 +469,58 @@
         </div>
         <div class="detail-overview-grid" id="detail-summary"></div>
         <div class="detail-explanation-grid">
-          <article class="card detail-explanation-card"><h3>What this measures</h3><p id="detail-represents"></p></article>
-          <article class="card detail-explanation-card"><h3>Responsible components</h3><p id="detail-components"></p></article>
-          <article class="card detail-explanation-card"><h3>How the process works</h3><p id="detail-process"></p></article>
+          <article class="card detail-explanation-card">
+            <h3>What this measures</h3>
+            <p id="detail-represents"></p>
+          </article>
+          <article class="card detail-explanation-card">
+            <h3>Responsible components</h3>
+            <p id="detail-components"></p>
+          </article>
+          <article class="card detail-explanation-card">
+            <h3>How the process works</h3>
+            <p id="detail-process"></p>
+          </article>
         </div>
         <div class="card detail-data-card">
-          <div class="card-header"><h3 id="detail-data-title">Available operational data</h3><span class="badge badge-neutral" id="detail-data-count"></span></div>
+          <div class="card-header">
+            <h3 id="detail-data-title">Available operational data</h3><span class="badge badge-neutral"
+              id="detail-data-count"></span>
+          </div>
           <div class="card-body" id="detail-data-content"></div>
         </div>
       </section>
 
       <section id="view-admin" class="view-panel">
         <div class="panel-header">
-          <div><h2>Admin NOC</h2><p class="subtitle">Operational health, observability links, and existing operator actions</p></div>
+          <div>
+            <h2>Admin NOC</h2>
+            <p class="subtitle">Operational health, observability links, and existing operator actions</p>
+          </div>
           <button class="btn btn-secondary" id="admin-refresh-button" type="button">Refresh system health</button>
         </div>
-        <div class="detail-overview-grid" id="admin-health-grid"><p class="chart-empty-state">Loading system health…</p></div>
-        <div class="admin-noc-grid">
-          <article class="card"><div class="card-header"><h3>Operations</h3></div><div class="card-body admin-actions" id="admin-actions"></div></article>
-          <article class="card"><div class="card-header"><h3>Observability endpoints</h3></div><div class="card-body admin-endpoints" id="admin-endpoints"></div></article>
+        <div class="detail-overview-grid" id="admin-health-grid">
+          <p class="chart-empty-state">Loading system health…</p>
         </div>
-        <article class="card admin-note"><h3>Access and controls</h3><p>This application does not define a separate role or authentication layer in its frontend. Controls shown here use the same access available to the current application session.</p></article>
+        <div class="admin-noc-grid">
+          <article class="card">
+            <div class="card-header">
+              <h3>Operations</h3>
+            </div>
+            <div class="card-body admin-actions" id="admin-actions"></div>
+          </article>
+          <article class="card">
+            <div class="card-header">
+              <h3>Observability endpoints</h3>
+            </div>
+            <div class="card-body admin-endpoints" id="admin-endpoints"></div>
+          </article>
+        </div>
+        <article class="card admin-note">
+          <h3>Access and controls</h3>
+          <p>This application does not define a separate role or authentication layer in its frontend. Controls shown
+            here use the same access available to the current application session.</p>
+        </article>
       </section>
 
       <!-- ============================================================= -->
@@ -314,7 +530,8 @@
         <div class="panel-header">
           <div>
             <h2>Subscribers</h2>
-            <p class="subtitle">Multi-PLMN SIM identities, allocated IP pools, PDU slice tunnels, and live balance accounts</p>
+            <p class="subtitle">Multi-PLMN SIM identities, allocated IP pools, PDU slice tunnels, and live balance
+              accounts</p>
           </div>
           <div class="header-actions">
             <button class="btn btn-primary" id="btn-open-topup">Account Top-Up</button>
@@ -333,7 +550,8 @@
         <div class="panel-header">
           <div>
             <h2>IMS &amp; Traffic</h2>
-            <p class="subtitle">SIP Digest MD5 sessions, RTPEngine SDP proxying, real-time bi-directional G.711 voice media, user-controlled duration &amp; rated billing events</p>
+            <p class="subtitle">SIP Digest MD5 sessions, RTPEngine SDP proxying, real-time bi-directional G.711 voice
+              media, user-controlled duration &amp; rated billing events</p>
           </div>
           <div class="header-actions">
             <button class="btn btn-primary" id="btn-trigger-domestic">Quick Domestic (UE1 → UE2)</button>
@@ -348,7 +566,7 @@
               <h3>Interactive Voice Call Control Studio</h3>
               <span class="badge badge-voice">VoNR Media</span>
             </div>
-            
+
           </div>
           <div class="card-body">
             <!-- Top: Interactive Call Builder Row -->
@@ -365,7 +583,8 @@
 
               <!-- Swap Button -->
               <div class="call-swap-col">
-                <button type="button" class="btn-swap-ue" id="btn-swap-caller-callee" title="Swap Caller &amp; Callee" onclick="app.swapCallParties()">
+                <button type="button" class="btn-swap-ue" id="btn-swap-caller-callee" title="Swap Caller &amp; Callee"
+                  onclick="app.swapCallParties()">
                   ⇄
                 </button>
               </div>
@@ -396,7 +615,8 @@
               <!-- Custom Duration input -->
               <div class="form-group" id="custom-duration-wrapper" style="display: none;">
                 <label for="call-custom-seconds"><strong>Seconds</strong></label>
-                <input type="number" id="call-custom-seconds" class="form-control" min="1" max="600" value="15" placeholder="Seconds">
+                <input type="number" id="call-custom-seconds" class="form-control" min="1" max="600" value="15"
+                  placeholder="Seconds">
               </div>
 
               <!-- Action Buttons -->
@@ -404,7 +624,8 @@
                 <button class="btn btn-voice btn-call-start" id="btn-start-call" onclick="app.startCustomCall()">
                   <span class="call-icon">📞</span> Start Call
                 </button>
-                <button class="btn btn-danger btn-call-hangup" id="btn-hangup-call" onclick="app.hangupActiveCall()" style="display: none;">
+                <button class="btn btn-danger btn-call-hangup" id="btn-hangup-call" onclick="app.hangupActiveCall()"
+                  style="display: none;">
                   <span class="call-icon">🔴</span> End Call / Hang Up
                 </button>
               </div>
@@ -539,7 +760,8 @@
         <div class="panel-header">
           <div>
             <h2>Billing &amp; Charging</h2>
-            <p class="subtitle">Erlang/OTP double-entry prepaid balance ledger, real-time tariffs, idempotency, and automated financial audits</p>
+            <p class="subtitle">Erlang/OTP double-entry prepaid balance ledger, real-time tariffs, idempotency, and
+              automated financial audits</p>
           </div>
           <div class="header-actions">
             <button class="btn btn-secondary" id="btn-open-quote-modal">Rate Quote Calculator</button>
@@ -553,7 +775,8 @@
             <div class="reconcile-status-box">
               <div>
                 <h3 id="audit-headline">Financial Reconciliation: PASS</h3>
-                <p id="audit-subtext" style="font-size: 0.76rem;">Double-entry balance invariants validated across all subscriber ledger accounts.</p>
+                <p id="audit-subtext" style="font-size: 0.76rem;">Double-entry balance invariants validated across all
+                  subscriber ledger accounts.</p>
               </div>
             </div>
             <div class="reconcile-stats">
@@ -656,7 +879,8 @@
         <div class="panel-header">
           <div>
             <h2>Multi-PLMN Network Topology &amp; Service Map</h2>
-            <p class="subtitle">Architecture map of Home PLMN (Egypt 602/03, 602/04), Visited PLMN (Bosnia 218/90), and Observability Stack</p>
+            <p class="subtitle">Architecture map of Home PLMN (Egypt 602/03, 602/04), Visited PLMN (Bosnia 218/90), and
+              Observability Stack</p>
           </div>
           <div class="header-actions">
             <button class="btn btn-secondary" onclick="app.refreshAll(true)">Refresh Map</button>
@@ -694,7 +918,8 @@
 
         <div class="form-group">
           <label for="topup-amount">Recharge Amount (LAB Credits)</label>
-          <input type="number" id="topup-amount" class="form-control" min="0.01" step="0.50" value="10.00" oninput="app.updateRechargePreview()">
+          <input type="number" id="topup-amount" class="form-control" min="0.01" step="0.50" value="10.00"
+            oninput="app.updateRechargePreview()">
         </div>
 
         <!-- Dynamic Live Balance Preview Box -->
@@ -784,5 +1009,21 @@
   <!-- Scripts -->
   <script src="js/visualizer.js"></script>
   <script src="js/app.js"></script>
+
+<!-- Expand logo-->
+<div id="logo-modal" class="logo-modal" onclick="closeLogoModal()">
+  <img src="images/Allo%20logo.jpg" alt="ALLO 5G Full" class="logo-modal-content">
+</div>
+
+<script>
+  function openLogoModal(e) {
+    e.stopPropagation(); 
+    document.getElementById('logo-modal').classList.add('show');
+  }
+  function closeLogoModal() {
+    document.getElementById('logo-modal').classList.remove('show');
+  }
+</script>
 </body>
+
 </html>
